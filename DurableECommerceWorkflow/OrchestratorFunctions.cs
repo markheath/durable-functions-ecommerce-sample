@@ -16,7 +16,12 @@ namespace DurableECommerceWorkflow
             if (!ctx.IsReplaying)
                 log.Info($"Processing order for {order.ProductId}");
 
-            return "Order accepted";
+            await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
+            var pdfLocation = await ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", order);
+            var videoLocation = await ctx.CallActivityAsync<string>("A_CreateWatermarkedVideo", order);
+            await ctx.CallActivityAsync("A_SendEmail", (order, pdfLocation, videoLocation));
+
+            return "Order processed successfully";
         }
     }
 }

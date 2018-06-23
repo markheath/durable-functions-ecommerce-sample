@@ -1,17 +1,28 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using System;
+using System.Threading.Tasks;
 
 namespace DurableECommerceWorkflow
 {
     public static class ActivityFunctions
     {
+
         [FunctionName("A_SaveOrderToDatabase")]
-        public static void SaveOrderToDatabase(
+        public static async Task SaveOrderToDatabase(
                             [ActivityTrigger] Order order,
+                            [Table("Orders")] IAsyncCollector<OrderEntity> table,
                             TraceWriter log)
         {
             log.Info("Saving order to database");
+            await table.AddAsync(new OrderEntity
+            {
+                PartitionKey = order.ProductId,
+                RowKey = order.Id,
+                Email = order.PurchaserEmail,
+                OrderDate = order.Date,
+                Amount = order.Amount
+            });
         }
 
         [FunctionName("A_CreatePersonalizedPdf")]

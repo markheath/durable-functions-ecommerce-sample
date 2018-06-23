@@ -8,5 +8,5 @@ $webhookUri = "http://localhost:7071/api/NewPurchaseWebhook"
 $statusUris = Invoke-RestMethod -Method Post -Body $orderInfo -Uri $webhookUri
 
 # check the status of the workflow
-iwr -Uri $statusUris.StatusQueryGetUri
+(iwr -Uri $statusUris.StatusQueryGetUri).Content
 ```

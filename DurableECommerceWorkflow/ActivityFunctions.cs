@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using System;
 
 namespace DurableECommerceWorkflow
 {
@@ -19,6 +20,8 @@ namespace DurableECommerceWorkflow
                             TraceWriter log)
         {
             log.Info("Creating PDF");
+            if (order.ProductId == "error")
+                throw new InvalidOperationException("Can't create the PDF for this product");
             return $"{order.Id}.pdf";
         }
 
@@ -32,6 +35,16 @@ namespace DurableECommerceWorkflow
             log.Warning("Thanks for your order, you can download your files here:");
             log.Warning(pdfLoc);
             log.Warning(videoLoc);
+        }
+
+        [FunctionName("A_SendProblemEmail")]
+        public static void SendProblemEmail(
+                    [ActivityTrigger] Order order,
+                    TraceWriter log)
+        {
+            log.Info($"Sending Problem Email {order.PurchaserEmail}");
+            log.Warning("We're very sorry there was a problem processing your order");
+            log.Warning("Please contact customer support");
         }
 
         [FunctionName("A_CreateWatermarkedVideo")]

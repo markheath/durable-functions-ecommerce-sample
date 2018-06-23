@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Threading.Tasks;
 
@@ -26,14 +27,44 @@ namespace DurableECommerceWorkflow
         }
 
         [FunctionName("A_CreatePersonalizedPdf")]
-        public static string CreatePersonalizedPdf(
+        public static async Task<string> CreatePersonalizedPdf(
                             [ActivityTrigger] Order order,
+                            [Blob("assets")] CloudBlobContainer assets,
                             TraceWriter log)
         {
             log.Info("Creating PDF");
             if (order.ProductId == "error")
                 throw new InvalidOperationException("Can't create the PDF for this product");
-            return $"{order.Id}.pdf";
+            var fileName = $"{order.Id}/{order.ProductId}.pdf";
+            await assets.CreateIfNotExistsAsync();
+            var blob = assets.GetBlockBlobReference(fileName);
+            await blob.UploadTextAsync($"Example {order.ProductId} PDF for {order.PurchaserEmail}");
+            return GetSasUri(blob);
+        }
+
+        [FunctionName("A_CreateWatermarkedVideo")]
+        public static async Task<string> CreateWatermarkedVideo(
+            [ActivityTrigger] Order order,
+            [Blob("assets")] CloudBlobContainer assets,
+            TraceWriter log)
+        {
+            log.Info("Creating Watermarked Video");
+            var fileName = $"{order.Id}/{order.ProductId}.mp4";
+            await assets.CreateIfNotExistsAsync();
+            var blob = assets.GetBlockBlobReference(fileName);
+            await blob.UploadTextAsync($"Example {order.ProductId} Video for {order.PurchaserEmail}");
+            return GetSasUri(blob);
+        }
+
+        private static string GetSasUri(CloudBlockBlob blob)
+        {
+            var sas = blob.GetSharedAccessSignature(new SharedAccessBlobPolicy()
+            {
+                Permissions = SharedAccessBlobPermissions.Read,
+                SharedAccessStartTime = DateTimeOffset.UtcNow,
+                SharedAccessExpiryTime = DateTimeOffset.UtcNow.AddDays(1),
+            });
+            return blob.StorageUri.PrimaryUri + sas;
         }
 
         [FunctionName("A_SendEmail")]
@@ -75,15 +106,6 @@ namespace DurableECommerceWorkflow
         {
             log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
             log.Warning($"We need approval for order {order.Id}");
-        }
-
-        [FunctionName("A_CreateWatermarkedVideo")]
-        public static string CreateWatermarkedVideo(
-                    [ActivityTrigger] Order order,
-                    TraceWriter log)
-        {
-            log.Info("Creating Watermarked Video");
-            return $"{order.Id}.mp4";
         }
     }
 }

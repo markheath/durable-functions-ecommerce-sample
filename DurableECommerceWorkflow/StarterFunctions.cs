@@ -14,7 +14,7 @@ namespace DurableECommerceWorkflow
     public static class StarterFunctions
     {
         [FunctionName("NewPurchaseWebhook")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> NewPurchaseWebhook(
             [HttpTrigger(AuthorizationLevel.Function, 
             "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
@@ -29,6 +29,22 @@ namespace DurableECommerceWorkflow
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             var statusUris = client.CreateHttpManagementPayload(orchestrationId);
             return new OkObjectResult(statusUris);
+        }
+
+        [FunctionName("ApproveOrder")]
+        public static async Task<IActionResult> ApproveOrder(
+            [HttpTrigger(AuthorizationLevel.Function,
+            "post", Route = null)]HttpRequest req,
+            [OrchestrationClient] DurableOrchestrationClient client,
+            TraceWriter log)
+        {
+            log.Info("Received an approval result.");
+
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var approvalResult = JsonConvert.DeserializeObject<ApprovalResult>(requestBody);
+            await client.RaiseEventAsync(approvalResult.OrchestrationId, "OrderApprovalResult", approvalResult.Approved ? "Approved" : "Rejected");
+            log.Info($"Approval Result for {approvalResult.OrchestrationId} is {approvalResult.Approved}");
+            return new OkResult();
         }
     }
 }

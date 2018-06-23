@@ -47,6 +47,25 @@ namespace DurableECommerceWorkflow
             log.Warning("Please contact customer support");
         }
 
+        [FunctionName("A_SendNotApprovedEmail")]
+        public static void SendNotApprovedEmail(
+            [ActivityTrigger] Order order,
+            TraceWriter log)
+        {
+            log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
+            log.Warning("We're very sorry we were not able to approve your order");
+            log.Warning("Please contact customer support");
+        }
+
+        [FunctionName("A_RequestOrderApproval")]
+        public static void RequestOrderApproval(
+            [ActivityTrigger] Order order,
+            TraceWriter log)
+        {
+            log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
+            log.Warning($"We need approval for order {order.Id}");
+        }
+
         [FunctionName("A_CreateWatermarkedVideo")]
         public static string CreateWatermarkedVideo(
                     [ActivityTrigger] Order order,

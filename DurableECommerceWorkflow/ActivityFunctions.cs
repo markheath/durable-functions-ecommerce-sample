@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Blob;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Threading.Tasks;
 
@@ -70,42 +71,71 @@ namespace DurableECommerceWorkflow
         [FunctionName("A_SendEmail")]
         public static void SendEmail(
                     [ActivityTrigger] (Order, string, string) input,
+                    [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
                     TraceWriter log)
         {
             var (order, pdfLoc, videoLoc) = input;
             log.Info($"Sending Email to {order.PurchaserEmail}");
-            log.Warning("Thanks for your order, you can download your files here:");
-            log.Warning(pdfLoc);
-            log.Warning(videoLoc);
+            var body = $"Thanks for your order, you can download your files here: " +
+                $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
+            log.Warning(body);
+            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
         }
 
         [FunctionName("A_SendProblemEmail")]
         public static void SendProblemEmail(
                     [ActivityTrigger] Order order,
+                    [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
                     TraceWriter log)
         {
             log.Info($"Sending Problem Email {order.PurchaserEmail}");
-            log.Warning("We're very sorry there was a problem processing your order");
-            log.Warning("Please contact customer support");
+            var body = "We're very sorry there was a problem processing your order. <br/>" +
+                " Please contact customer support";
+            log.Warning(body);
+            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+        }
+
+        private static SendGridMessage GenerateMail(string recipient, string subject, string body)
+        {
+            var recipientEmail = new EmailAddress(recipient);
+            var senderEmail = new EmailAddress(Environment.GetEnvironmentVariable("SenderEmail"));
+
+            var message = new SendGridMessage();
+            message.Subject = subject;
+            message.From = senderEmail;
+            message.AddTo(recipientEmail);
+            message.HtmlContent = body;
+            return message;
         }
 
         [FunctionName("A_SendNotApprovedEmail")]
         public static void SendNotApprovedEmail(
             [ActivityTrigger] Order order,
+            [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
             TraceWriter log)
         {
             log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
-            log.Warning("We're very sorry we were not able to approve your order");
-            log.Warning("Please contact customer support");
+            var body = "We're very sorry we were not able to approve your order. <br/>" +
+                " Please contact customer support";
+            log.Warning(body);
+            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
         }
 
         [FunctionName("A_RequestOrderApproval")]
         public static void RequestOrderApproval(
             [ActivityTrigger] Order order,
+            [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
             TraceWriter log)
         {
             log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
-            log.Warning($"We need approval for order {order.Id}");
+            var subject = $"Order {order.Id} requires approval";
+            var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
+
+            var body = $"Please review {order.Id}<br>"
+                               + $"for product {order.ProductId}"
+                               + $"and amount {order.Amount}";
+
+            message = GenerateMail(order.PurchaserEmail, subject, body);
         }
     }
 }

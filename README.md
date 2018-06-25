@@ -35,14 +35,18 @@ $approveOrderUri = "http://localhost:7071/api/ApproveOrder"
 Invoke-RestMethod -Method Post -Body $approvalResult -Uri $approveOrderUri
 ```
 
-To run the application locally, you'll need to set up your local.settings.json file, which is not checked into source control. An example
+To run the application locally, you'll need to set up your local.settings.json file, which is not checked into source control. An example is shown below:
 
 ```javascript
 {
     "IsEncrypted": false,
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-        "AzureWebJobsDashboard": "UseDevelopmentStorage=true"
+        "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+        "SendGridKey": "<<your sendgrid key here>>",
+        "ApproverEmail": "<<your email address here>>",
+        "SenderEmail": "any@example.email",
+        "Host": "http://localhost:7071"
     }
 }
 ```

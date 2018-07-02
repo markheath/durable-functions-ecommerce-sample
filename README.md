@@ -23,16 +23,19 @@ $orderInfoErr = "{ productId: 'error', amount:24, purchaserEmail:'your@email.com
 To simulate an order needing approval, use:
 
 ```powershell
-$orderInfoErr = "{ productId: 'durable-functions', amount:3000, purchaserEmail:'your@email.com' }"
+$orderInfo = "{ productId: 'durable-functions', amount:3000, purchaserEmail:'your@email.com' }"
 ```
 
 To send an approval to a specific orchestration:
 
 ```powershell
-$orchestrationId = "" # todo: insert orchestration id 
-$approvalResult = "{ orchestrationId: '" + $orchestrationId + "', approved:true }"
-$approveOrderUri = "http://localhost:7071/api/ApproveOrder"
-Invoke-RestMethod -Method Post -Body $approvalResult -Uri $approveOrderUri
+function Approve-Order {
+    Param ([String]$orchestrationId)
+    $approvalResult = "{ orchestrationId: '" + $orchestrationId + "', approved:true }"
+    $approveOrderUri = "http://localhost:7071/api/ApproveOrder"
+    Invoke-RestMethod -Method Post -Body $approvalResult -Uri $approveOrderUri
+}
+Approve-Order -orchestrationId <<your-orchestration-id>>
 ```
 
 To run the application locally, you'll need to set up your local.settings.json file, which is not checked into source control. An example is shown below:

@@ -2,9 +2,73 @@
 <html>
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Durable Functions Shop</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
 </head>
 <body>
-    <h1>Durable Functions Shop</h1>
+
+    <div class="text-center bg-light" style="margin-bottom:0">
+        <h1>Durable Functions Demo Shop</h1>
+        <p>Buy a training course!</p>
+    </div>
+    <div class="container">
+        <div class="alert alert-success">
+            <strong>Great choice!</strong> Thank you for purchasing <strong>performance-tuning</strong>. Your order number is <strong>12904</strong>
+        </div>
+
+        <div class="row">
+
+
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" src="images/strat.jpg" alt="Guitar">
+                    <div class="card-body">
+                        <h4 class="card-title">Performance Tuning</h4>
+                        <p class="card-text">Some example text.</p>
+                        <a href="#" data-product="performance-tuning" 
+                           data-price="2000" class="btn btn-primary purchase">Buy now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" src="images/football.jpg" alt="Football">
+                    <div class="card-body">
+                        <h4 class="card-title">Achieving Your Goals</h4>
+                        <p class="card-text">Some example text.</p>
+                        <a href="#" data-product="achieving-your-goals" 
+                           data-price="400" class="btn btn-primary purchase">Buy now</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <img class="card-img-top" src="images/cakes.jpg" alt="Cakes">
+                    <div class="card-body">
+                        <h4 class="card-title">Cake Driven Development</h4>
+                        <p class="card-text">Some example text.</p>
+                        <a href="#" data-product="cake-driven-development" 
+                           data-price="50" class="btn btn-primary purchase">Buy now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function purchaseItem(button) {
+            const product = button.target.dataset.product;
+            const price = button.target.dataset.price;
+            console.log(`purchased a ${product} for ${price}`);
+        }
+        const buttons = Array.from(document.querySelectorAll('.purchase'));
+        Array.prototype.forEach.call(buttons, b => b.addEventListener('click', purchaseItem));
+    </script>
 </body>
 </html>

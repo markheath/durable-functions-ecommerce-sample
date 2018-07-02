@@ -22,26 +22,21 @@ namespace DurableECommerceWorkflow
 
             if (order.Amount > 1000)
             {
+                if (!ctx.IsReplaying)
+                    log.Warning($"Need approval for {ctx.InstanceId}");
+
                 ctx.SetCustomStatus("Needs approval");
                 await ctx.CallActivityAsync("A_RequestOrderApproval", order);
-                using (var cts = new CancellationTokenSource())
-                {
-                    var timeoutAt = ctx.CurrentUtcDateTime.AddMinutes(30);
-                    var timeoutTask = ctx.CreateTimer(timeoutAt, cts.Token);
-                    var approvalTask = ctx.WaitForExternalEvent<string>("OrderApprovalResult");
 
-                    var winner = await Task.WhenAny(approvalTask, timeoutTask);
-                    if (winner == approvalTask)
-                    {
-                        cts.Cancel(); // we should cancel the timeout task
-                    }
-                    else
-                    {
-                        // timed out
-                        await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
-                        return "Order not approved";
-                    }
+                var approvalResult = await ctx.WaitForExternalEvent<string>("OrderApprovalResult", TimeSpan.FromSeconds(180));
+
+                if (approvalResult == null)
+                {
+                    // timed out
+                    await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
+                    return "Order not approved";
                 }
+
             }
 
             string pdfLocation = null;
@@ -159,6 +154,46 @@ namespace DurableECommerceWorkflow
             await ctx.CallActivityAsync("A_SendEmail", (order, pdfLocation, videoLocation));
 
             return "Order processed successfully";
+        }
+    }
+
+    public static class DurableOrchestrationContextExtensions
+    {
+        public static Task<T> WaitForExternalEvent<T>(this DurableOrchestrationContext ctx, string name, TimeSpan timeout)
+        {
+            var tcs = new TaskCompletionSource<T>();
+            var cts = new CancellationTokenSource();
+
+            var timeoutAt = ctx.CurrentUtcDateTime + timeout;
+            var timeoutTask = ctx.CreateTimer(timeoutAt, cts.Token);
+            var waitForEventTask = ctx.WaitForExternalEvent<T>(name);
+
+            waitForEventTask.ContinueWith(t =>
+            {
+                using (cts)
+                {
+                    if (t.Exception != null)
+                    {
+                        tcs.TrySetException(t.Exception);
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(t.Result);
+                    }
+                    cts.Cancel();
+                }
+            }, TaskContinuationOptions.ExecuteSynchronously);
+
+            timeoutTask.ContinueWith(t =>
+            {
+                using (cts)
+                {
+                    //tcs.TrySetCanceled();
+                    tcs.TrySetResult(default(T));
+                }
+            }, TaskContinuationOptions.ExecuteSynchronously);
+
+            return tcs.Task;
         }
     }
 }

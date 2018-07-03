@@ -68,10 +68,10 @@ namespace DurableECommerceWorkflow
             return blob.StorageUri.PrimaryUri + sas;
         }
 
-        [FunctionName("A_SendEmail")]
-        public static void SendEmail(
+        [FunctionName("A_SendOrderConfirmationEmail")]
+        public static async Task SendOrderConfirmationEmail(
                     [ActivityTrigger] (Order, string, string) input,
-                    [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
+                    [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
                     TraceWriter log)
         {
             var (order, pdfLoc, videoLoc) = input;
@@ -79,20 +79,22 @@ namespace DurableECommerceWorkflow
             var body = $"Thanks for your order, you can download your files here: " +
                 $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
             log.Warning(body);
-            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            await sender.AddAsync(message);
         }
 
         [FunctionName("A_SendProblemEmail")]
-        public static void SendProblemEmail(
+        public static async Task SendProblemEmail(
                     [ActivityTrigger] Order order,
-                    [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
+                    [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
                     TraceWriter log)
         {
             log.Info($"Sending Problem Email {order.PurchaserEmail}");
             var body = "We're very sorry there was a problem processing your order. <br/>" +
                 " Please contact customer support";
             log.Warning(body);
-            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            await sender.AddAsync(message);
         }
 
         private static SendGridMessage GenerateMail(string recipient, string subject, string body)
@@ -109,22 +111,23 @@ namespace DurableECommerceWorkflow
         }
 
         [FunctionName("A_SendNotApprovedEmail")]
-        public static void SendNotApprovedEmail(
+        public static async Task SendNotApprovedEmail(
             [ActivityTrigger] Order order,
-            [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
+            [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
             TraceWriter log)
         {
             log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
             var body = "We're very sorry we were not able to approve your order. <br/>" +
                 " Please contact customer support";
             log.Warning(body);
-            message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            await sender.AddAsync(message);
         }
 
         [FunctionName("A_RequestOrderApproval")]
-        public static void RequestOrderApproval(
+        public static async Task RequestOrderApproval(
             [ActivityTrigger] Order order,
-            [SendGrid(ApiKey = "SendGridKey")] out SendGridMessage message,
+            [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
             TraceWriter log)
         {
             log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
@@ -135,7 +138,8 @@ namespace DurableECommerceWorkflow
                                + $"for product {order.ProductId}"
                                + $"and amount {order.Amount}";
 
-            message = GenerateMail(order.PurchaserEmail, subject, body);
+            var message = GenerateMail(approverEmail, subject, body);
+            await sender.AddAsync(message);
         }
     }
 }

@@ -57,7 +57,7 @@ namespace DurableECommerceWorkflow
 
             if (pdfLocation != null && videoLocation != null)
             {
-                await ctx.CallActivityWithRetryAsync("A_SendEmail",
+                await ctx.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                     new RetryOptions(TimeSpan.FromSeconds(30), 3),
                     (order, pdfLocation, videoLocation));
                 return "Order processed successfully";
@@ -99,7 +99,7 @@ namespace DurableECommerceWorkflow
 
             if (pdfLocation != null && videoLocation != null)
             {
-                await ctx.CallActivityWithRetryAsync("A_SendEmail",
+                await ctx.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                     new RetryOptions(TimeSpan.FromSeconds(30), 3),
                     (order, pdfLocation, videoLocation));
                 return "Order processed successfully";
@@ -131,7 +131,7 @@ namespace DurableECommerceWorkflow
             var pdfLocation = pdfTask.Result;
             var videoLocation = videoTask.Result;
 
-            await ctx.CallActivityAsync("A_SendEmail", (order, pdfLocation, videoLocation));
+            await ctx.CallActivityAsync("A_SendOrderConfirmationEmail", (order, pdfLocation, videoLocation));
 
             return "Order processed successfully";
         }
@@ -150,7 +150,7 @@ namespace DurableECommerceWorkflow
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
             var pdfLocation = await ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", order);
             var videoLocation = await ctx.CallActivityAsync<string>("A_CreateWatermarkedVideo", order);
-            await ctx.CallActivityAsync("A_SendEmail", (order, pdfLocation, videoLocation));
+            await ctx.CallActivityAsync("A_SendOrderConfirmationEmail", (order, pdfLocation, videoLocation));
 
             return "Order processed successfully";
         }

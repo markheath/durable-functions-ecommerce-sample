@@ -7,7 +7,15 @@
         "route": "/"
       },
       "debug": true,
-      "backendUri": "https://localhost:44358/index.html"
+      "backendUri": "http://localhost:54045/index.html"
+    },
+    "proxy2": {
+      "matchCondition": {
+        "methods": [ "GET" ],
+        "route": "/images/{*restOfPath}"
+      },
+      "debug": true,
+      "backendUri": "http://localhost:54045/images/{restOfPath}"
     }
   }
 }

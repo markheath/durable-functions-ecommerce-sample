@@ -49,7 +49,9 @@ To run the application locally, you'll need to set up your local.settings.json f
         "SendGridKey": "<<your sendgrid key here>>",
         "ApproverEmail": "<<your email address here>>",
         "SenderEmail": "any@example.email",
-        "Host": "http://localhost:7071"
+        "Host": "http://localhost:7071",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+        "AZURE_FUNCTION_PROXY_DISABLE_LOCAL_CALL": "true" // https://github.com/Azure/azure-functions-core-tools/issues/319
     }
 }
 ```

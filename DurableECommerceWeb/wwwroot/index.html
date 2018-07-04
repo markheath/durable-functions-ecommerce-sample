@@ -62,21 +62,15 @@
                 <a href="#" class="btn btn-primary" id="checkStatusButton">Check</a>
             </div>
             <div class="col-md-6">
-
                 <h3>Approve order</h3>
-                <div class="form-inline">
-                    <div class="form-check">
-                        <label class="form-check-label">
-                            <input class="form-check-input" value="checked" type="checkbox">Is approved
-                        </label>
-                    </div>
-                    <a href="#" id="approveButton" class="btn btn-primary">Submit</a>
-                </div>
-            </div>
+                <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton">Approve</a>
+                <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton">Reject</a>
             </div>
         </div>
+    </div>
 
     <script>
+        let orderId = 49889;
         const postData = (url = ``, data = {}) => {
             // Default options are marked with *
             return fetch(url, {
@@ -105,13 +99,21 @@
         }
         function approve(event) {
             event.preventDefault();
-            fetch(`http://localhost:7071/api/approve/`)
+            const status = event.target.dataset.approvalStatus;
+            postData(`http://localhost:7071/api/approve/${orderId}`, status)
         }
 
-        const buttons = Array.from(document.querySelectorAll('.purchase'));
-        Array.prototype.forEach.call(buttons, b => b.addEventListener('click', purchaseItem));
-        document.querySelector('#approveButton').addEventListener('click', approve);
-        document.querySelector('#checkStatusButton').addEventListener('click', approve);
+        function checkStatus(event) {
+            event.preventDefault();
+            fetch(`http://localhost:7071/api/orderstatus/${orderId}`)
+                .then(response => console.log(response.json()))
+        }
+
+        const purchaseButtons = Array.from(document.querySelectorAll('.purchase'));
+        Array.prototype.forEach.call(purchaseButtons, b => b.addEventListener('click', purchaseItem));
+        const approvalButtons = Array.from(document.querySelectorAll('.approveButton'));
+        Array.prototype.forEach.call(approvalButtons, b => b.addEventListener('click', approve));
+        document.querySelector('#checkStatusButton').addEventListener('click', checkStatus);
     </script>
 </body>
 </html>

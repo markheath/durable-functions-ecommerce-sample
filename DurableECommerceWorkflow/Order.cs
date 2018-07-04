@@ -9,5 +9,7 @@ namespace DurableECommerceWorkflow
         public DateTime Date { get; set; } = DateTime.Now;
         public decimal Amount { get; set; }
         public string PurchaserEmail { get; set; }
+
+        public string OrchestrationId { get; set; }
     }
 }

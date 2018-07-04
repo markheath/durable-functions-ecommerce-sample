@@ -13,6 +13,7 @@ namespace DurableECommerceWorkflow
             TraceWriter log)
         {
             var order = ctx.GetInput<Order>();
+            order.OrchestrationId = ctx.InstanceId;
 
             if (!ctx.IsReplaying)
                 log.Info($"Processing order for {order.ProductId}");

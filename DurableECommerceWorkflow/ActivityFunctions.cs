@@ -13,14 +13,16 @@ namespace DurableECommerceWorkflow
         [FunctionName("A_SaveOrderToDatabase")]
         public static async Task SaveOrderToDatabase(
                             [ActivityTrigger] Order order,
-                            [Table("Orders")] IAsyncCollector<OrderEntity> table,
+                            [Table(OrderEntity.TableName)] IAsyncCollector<OrderEntity> table,
                             TraceWriter log)
         {
             log.Info("Saving order to database");
             await table.AddAsync(new OrderEntity
             {
-                PartitionKey = order.ProductId,
+                PartitionKey = OrderEntity.OrderPartitionKey,
                 RowKey = order.Id,
+                OrchestrationId = order.OrchestrationId,
+                ProductId = order.ProductId,
                 Email = order.PurchaserEmail,
                 OrderDate = order.Date,
                 Amount = order.Amount

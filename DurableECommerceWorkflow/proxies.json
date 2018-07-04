@@ -1,0 +1,13 @@
+﻿{
+  "$schema": "http://json.schemastore.org/proxies",
+  "proxies": {
+    "proxy1": {
+      "matchCondition": {
+        "methods": [ "GET" ],
+        "route": "/"
+      },
+      "debug": true,
+      "backendUri": "https://localhost:44358/index.html"
+    }
+  }
+}

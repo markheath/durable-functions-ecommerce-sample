@@ -1,4 +1,3 @@
-
 using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -30,7 +29,7 @@ namespace DurableECommerceWorkflow
             var r = new Random();
             order.Id = r.Next(10000, 100000).ToString();
 
-            log.Info($"Order {order.Id} for product {order.ProductId} amount {order.Amount}");
+            log.Warning($"Order {order.Id} for product {order.ProductId} amount {order.Amount}");
 
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             return new OkObjectResult(new { order.Id });
@@ -39,9 +38,9 @@ namespace DurableECommerceWorkflow
         [FunctionName("GetOrderStatus")]
         public static async Task<IActionResult> GetOrderStatus(
             [HttpTrigger(AuthorizationLevel.Function,
-            "get", Route = "/orderstatus/{id}")]HttpRequest req,
+            "get", Route = "orderstatus/{id}")]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
-            [Table("todos", "TODO", "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
+            [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
             TraceWriter log, string id)
         {
             log.Info($"Checking status of order {id}");
@@ -55,11 +54,12 @@ namespace DurableECommerceWorkflow
             return new OkObjectResult(status);
         }
 
+        [FunctionName("ApproveOrderById")]
         public static async Task<IActionResult> ApproveOrderById(
             [HttpTrigger(AuthorizationLevel.Function,
-            "get", Route = "/approve/{id}")]HttpRequest req,
+            "post", Route = "approve/{id}")]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
-            [Table("todos", "TODO", "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
+            [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
             TraceWriter log, string id)
         {
             log.Info($"Setting approval status of order {id}");

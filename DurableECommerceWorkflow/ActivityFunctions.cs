@@ -3,6 +3,7 @@ using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Blob;
 using SendGrid.Helpers.Mail;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DurableECommerceWorkflow
@@ -80,9 +81,8 @@ namespace DurableECommerceWorkflow
             log.Info($"Sending Email to {order.PurchaserEmail}");
             var body = $"Thanks for your order, you can download your files here: " +
                 $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
-            log.Warning(body);
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
-            await sender.AddAsync(message);
+            await sender.PostAsync(message,log);
         }
 
         [FunctionName("A_SendProblemEmail")]
@@ -94,9 +94,8 @@ namespace DurableECommerceWorkflow
             log.Info($"Sending Problem Email {order.PurchaserEmail}");
             var body = "We're very sorry there was a problem processing your order. <br/>" +
                 " Please contact customer support";
-            log.Warning(body);
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
-            await sender.AddAsync(message);
+            await sender.PostAsync(message,log);
         }
 
         private static SendGridMessage GenerateMail(string recipient, string subject, string body)
@@ -121,9 +120,8 @@ namespace DurableECommerceWorkflow
             log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
             var body = "We're very sorry we were not able to approve your order. <br/>" +
                 " Please contact customer support";
-            log.Warning(body);
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
-            await sender.AddAsync(message);
+            await sender.PostAsync(message,log);
         }
 
         [FunctionName("A_RequestOrderApproval")]
@@ -141,7 +139,23 @@ namespace DurableECommerceWorkflow
                                + $"and amount {order.Amount}";
 
             var message = GenerateMail(approverEmail, subject, body);
-            await sender.AddAsync(message);
+            await sender.PostAsync(message, log);
+        }
+
+        private static async Task PostAsync(this IAsyncCollector<SendGridMessage> sender, SendGridMessage message, TraceWriter log)
+        {
+            // don't actually try to send SendGrid emails if we are just using example or missing email addresses
+            var testMode = message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
+                .Any(e => String.IsNullOrEmpty(e) || e.Contains("@example") || e.Contains("@email"));
+            if (testMode)
+            {
+                log.Warning($"Sending email with body {message.HtmlContent}");
+            }
+            else
+            {
+                await sender.AddAsync(message);
+            }
+
         }
     }
 }

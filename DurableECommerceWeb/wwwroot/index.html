@@ -19,17 +19,14 @@
         <div class="alert alert-success">
             <strong>Great choice!</strong> Thank you for purchasing <strong>performance-tuning</strong>. Your order number is <strong>12904</strong>
         </div>
-
         <div class="row">
-
-
             <div class="col-md-4">
                 <div class="card">
                     <img class="card-img-top" src="images/strat.jpg" alt="Guitar">
                     <div class="card-body">
                         <h4 class="card-title">Performance Tuning</h4>
                         <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="performance-tuning" 
+                        <a href="#" data-product="performance-tuning"
                            data-price="2000" class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
@@ -40,7 +37,7 @@
                     <div class="card-body">
                         <h4 class="card-title">Achieving Your Goals</h4>
                         <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="achieving-your-goals" 
+                        <a href="#" data-product="achieving-your-goals"
                            data-price="400" class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
@@ -52,14 +49,32 @@
                     <div class="card-body">
                         <h4 class="card-title">Cake Driven Development</h4>
                         <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="cake-driven-development" 
+                        <a href="#" data-product="cake-driven-development"
                            data-price="50" class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
             </div>
         </div>
 
-    </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Check Order Status</h3>
+                <a href="#" class="btn btn-primary" id="checkStatusButton">Check</a>
+            </div>
+            <div class="col-md-6">
+
+                <h3>Approve order</h3>
+                <div class="form-inline">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" value="checked" type="checkbox">Is approved
+                        </label>
+                    </div>
+                    <a href="#" id="approveButton" class="btn btn-primary">Submit</a>
+                </div>
+            </div>
+            </div>
+        </div>
 
     <script>
         const postData = (url = ``, data = {}) => {
@@ -80,16 +95,23 @@
             .then(response => response.json()) // parses response to JSON
         };
 
-        function purchaseItem(button) {
-            const product = button.target.dataset.product;
-            const price = button.target.dataset.price;
+        function purchaseItem(event) {
+            const product = event.target.dataset.product;
+            const price = event.target.dataset.price;
             console.log(`purchased a ${product} for ${price}`);
-            postData(`http://localhost:7071/api/NewPurchaseWebhook`, { ProductId: product, Amount: price })
+            postData(`http://localhost:7071/api/CreateOrder`, { ProductId: product, Amount: price })
                 .then(data => console.log(data)) // JSON from `response.json()` call
                 .catch(error => console.dir(error));
         }
+        function approve(event) {
+            event.preventDefault();
+            fetch(`http://localhost:7071/api/approve/`)
+        }
+
         const buttons = Array.from(document.querySelectorAll('.purchase'));
         Array.prototype.forEach.call(buttons, b => b.addEventListener('click', purchaseItem));
+        document.querySelector('#approveButton').addEventListener('click', approve);
+        document.querySelector('#checkStatusButton').addEventListener('click', approve);
     </script>
 </body>
 </html>

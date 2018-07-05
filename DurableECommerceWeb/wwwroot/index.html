@@ -16,9 +16,7 @@
         <p>Buy a training course!</p>
     </div>
     <div class="container">
-        <div class="alert alert-success">
-            <strong>Great choice!</strong> Thank you for purchasing <strong>performance-tuning</strong>. Your order number is <strong>12904</strong>
-        </div>
+
         <div class="row">
             <div class="col-md-4">
                 <div class="card">
@@ -55,7 +53,9 @@
                 </div>
             </div>
         </div>
-
+        <div class="row">
+            <div id="message"></div>
+        </div>
         <div class="row">
             <div class="col-md-6">
                 <h3>Check Order Status</h3>
@@ -70,7 +70,7 @@
     </div>
 
     <script>
-        let orderId = 49889;
+        let orderId = -1;
         const postData = (url = ``, data = {}) => {
             // Default options are marked with *
             return fetch(url, {
@@ -89,24 +89,32 @@
             .then(response => response.json()) // parses response to JSON
         };
 
+        function orderCreated(orderInfo, product) {
+            orderId = orderInfo.id;
+            const messageDiv = document.getElementById("message");
+            messageDiv.classList.add("alert", "alert-success");
+            messageDiv.innerHTML = `<strong>Great choice!</strong> Thank you for purchasing <strong>${product}</strong>. Your order number is <strong>${orderId}</strong>`;
+        }
+
         function purchaseItem(event) {
             const product = event.target.dataset.product;
             const price = event.target.dataset.price;
             console.log(`purchased a ${product} for ${price}`);
-            postData(`http://localhost:7071/api/CreateOrder`, { ProductId: product, Amount: price })
-                .then(data => console.log(data)) // JSON from `response.json()` call
+            postData(`/api/CreateOrder`, { ProductId: product, Amount: price })
+                .then(data => orderCreated(data, product))
                 .catch(error => console.dir(error));
         }
         function approve(event) {
             event.preventDefault();
             const status = event.target.dataset.approvalStatus;
-            postData(`http://localhost:7071/api/approve/${orderId}`, status)
+            postData(`/api/approve/${orderId}`, status)
         }
 
         function checkStatus(event) {
             event.preventDefault();
-            fetch(`http://localhost:7071/api/orderstatus/${orderId}`)
-                .then(response => console.log(response.json()))
+            fetch(`/api/orderstatus/${orderId}`)
+                .then(response => response.json())
+                .then(json => console.log(json))
         }
 
         const purchaseButtons = Array.from(document.querySelectorAll('.purchase'));

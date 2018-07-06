@@ -1,21 +1,19 @@
 ﻿{
   "$schema": "http://json.schemastore.org/proxies",
   "proxies": {
-    "proxy1": {
+    "proxyHomePage": {
       "matchCondition": {
         "methods": [ "GET" ],
         "route": "/"
       },
-      "debug": true,
-      "backendUri": "http://localhost:54045/index.html"
+      "backendUri": "%WEB_HOST%/index.html"
     },
-    "proxy2": {
+    "proxyImages": {
       "matchCondition": {
         "methods": [ "GET" ],
         "route": "/images/{*restOfPath}"
       },
-      "debug": true,
-      "backendUri": "http://localhost:54045/images/{restOfPath}"
+      "backendUri": "%WEB_HOST%/images/{restOfPath}"
     }
   }
 }

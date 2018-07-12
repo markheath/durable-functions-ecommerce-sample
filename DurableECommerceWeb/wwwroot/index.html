@@ -8,6 +8,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
 
@@ -15,62 +16,40 @@
         <h1>Durable Functions Demo Shop</h1>
         <p>Buy a training course!</p>
     </div>
-    <div class="container">
-
+    <div id="app" class="container">
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-4" v-for="product in products">
                 <div class="card">
-                    <img class="card-img-top" src="images/strat.jpg" alt="Guitar">
+                    <img class="card-img-top" :src="product.image" :alt="product.name">
                     <div class="card-body">
-                        <h4 class="card-title">Performance Tuning</h4>
+                        <h4 class="card-title">{{product.name}}</h4>
                         <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="performance-tuning"
-                           data-price="2000" class="btn btn-primary purchase">Buy now</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <img class="card-img-top" src="images/football.jpg" alt="Football">
-                    <div class="card-body">
-                        <h4 class="card-title">Achieving Your Goals</h4>
-                        <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="achieving-your-goals"
-                           data-price="400" class="btn btn-primary purchase">Buy now</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <img class="card-img-top" src="images/cakes.jpg" alt="Cakes">
-                    <div class="card-body">
-                        <h4 class="card-title">Cake Driven Development</h4>
-                        <p class="card-text">Some example text.</p>
-                        <a href="#" data-product="cake-driven-development"
-                           data-price="50" class="btn btn-primary purchase">Buy now</a>
+                        <a href="#" :data-product="product.id" @click="buy"
+                           :data-price="product.price" class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div id="message"></div>
+        <div class="row" v-if="orderCreated">
+            <div class="alert alert-success">
+                <strong>Great choice!</strong>
+                Thank you for purchasing <strong>{{product}}</strong>. Your order number is <strong>{{orderId}}</strong>
+            </div>
         </div>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-6" v-if="orderCreated">
                 <h3>Check Order Status</h3>
-                <a href="#" class="btn btn-primary" id="checkStatusButton">Check</a>
+                <a href="#" class="btn btn-primary" @click="checkStatus">Check</a>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" v-if="awaitingApproval">
                 <h3>Approve order</h3>
-                <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton">Approve</a>
-                <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton">Reject</a>
+                <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
+                <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
             </div>
         </div>
     </div>
 
     <script>
-        let orderId = -1;
         const postData = (url = ``, data = {}) => {
             // Default options are marked with *
             return fetch(url, {
@@ -89,39 +68,43 @@
             .then(response => response.json()) // parses response to JSON
         };
 
-        function orderCreated(orderInfo, product) {
-            orderId = orderInfo.id;
-            const messageDiv = document.getElementById("message");
-            messageDiv.classList.add("alert", "alert-success");
-            messageDiv.innerHTML = `<strong>Great choice!</strong> Thank you for purchasing <strong>${product}</strong>. Your order number is <strong>${orderId}</strong>`;
-        }
-
-        function purchaseItem(event) {
-            const product = event.target.dataset.product;
-            const price = event.target.dataset.price;
-            console.log(`purchased a ${product} for ${price}`);
-            postData(`/api/CreateOrder`, { ProductId: product, Amount: price })
-                .then(data => orderCreated(data, product))
-                .catch(error => console.dir(error));
-        }
-        function approve(event) {
-            event.preventDefault();
-            const status = event.target.dataset.approvalStatus;
-            postData(`/api/approve/${orderId}`, status)
-        }
-
-        function checkStatus(event) {
-            event.preventDefault();
-            fetch(`/api/orderstatus/${orderId}`)
-                .then(response => response.json())
-                .then(json => console.log(json))
-        }
-
-        const purchaseButtons = Array.from(document.querySelectorAll('.purchase'));
-        Array.prototype.forEach.call(purchaseButtons, b => b.addEventListener('click', purchaseItem));
-        const approvalButtons = Array.from(document.querySelectorAll('.approveButton'));
-        Array.prototype.forEach.call(approvalButtons, b => b.addEventListener('click', approve));
-        document.querySelector('#checkStatusButton').addEventListener('click', checkStatus);
+        var app = new Vue({
+            el: '#app',
+            data: {
+                products: [
+                    { id: 'performance-tuning', name: 'Performance Tuning', price: 2000, image: 'images/strat.jpg' },
+                    { id: 'achieving-your-goals', name: 'Achieving Your Goals', price: 400, image: 'images/football.jpg' },
+                    { id: 'cake-driven-development', name: 'Cake Driven Development', price: 50, image: 'images/cakes.jpg' },
+                ],
+                orderCreated: false,
+                awaitingApproval: false,
+                orderId: -1,
+                product: ""
+            },
+            methods: {
+                onOrderCreated: function (orderInfo, product) {
+                    this.orderId = orderInfo.id;
+                    this.orderCreated = true;
+                },
+                checkStatus: function (event) {
+                    fetch(`/api/orderstatus/${this.orderId}`)
+                        .then(response => response.json())
+                        .then(json => console.log(json))
+                },
+                approve: function (event) {
+                    const status = event.target.dataset.approvalStatus;
+                    postData(`/api/approve/${orderId}`, status)
+                },
+                buy: function (event) {
+                    this.product = event.target.dataset.product;
+                    const price = event.target.dataset.price;
+                    console.log(`purchased a ${this.product} for ${price}`);
+                    postData(`/api/CreateOrder`, { ProductId: this.product, Amount: price })
+                        .then(data => this.onOrderCreated(data, this.product))
+                        .catch(error => console.dir(error));
+                }
+            }
+        })
     </script>
 </body>
 </html>

@@ -12,24 +12,28 @@
 </head>
 <body>
 
+    <!-- In Bootstrap 4, for the margin you can use the spacing class mb-0. https://getbootstrap.com/docs/4.0/utilities/spacing/ -->
     <div class="text-center bg-light" style="margin-bottom:0">
         <h1>Durable Functions Demo Shop</h1>
         <p>Buy a training course!</p>
     </div>
     <div id="app" class="container">
         <div class="row">
+            <!-- Might want to consider specifying a unique key for each item. https://vuejs.org/v2/guide/list.html#key -->
             <div class="col-md-4" v-for="product in products">
                 <div class="card">
                     <img class="card-img-top" :src="product.image" :alt="product.name">
                     <div class="card-body">
                         <h4 class="card-title">{{product.name}}</h4>
                         <p class="card-text">Some example text.</p>
+                        <!-- Do you need data-product and data-price? The whole product object will be available in the click handler? -->
                         <a href="#" :data-product="product.id" @click="buy"
                            :data-price="product.price" class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Might want to consider specifying a unique key for each item. https://vuejs.org/v2/guide/list.html#key -->
         <div class="row" v-if="orderCreated">
             <div class="alert alert-success">
                 <strong>Great choice!</strong>
@@ -81,6 +85,7 @@
                 credentials: "same-origin", // include, same-origin, *omit
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
+                    <!-- Can this commented out line be removed now? -->
                     // "Content-Type": "application/x-www-form-urlencoded",
                 },
                 redirect: "follow", // manual, *follow, error
@@ -100,6 +105,7 @@
                 ],
                 orderCreated: false,
                 awaitingApproval: false,
+                // Would an initial orderId of null be better / clearer so signify no value? -->
                 orderId: -1,
                 product: "",
                 orderStatus: null
@@ -131,3 +137,4 @@
     </script>
 </body>
 </html>
+

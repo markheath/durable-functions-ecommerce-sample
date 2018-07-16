@@ -7,10 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableECommerceWorkflow", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{51D25259-D7B2-4C38-8EF3-42A4BE480B9D}"
 	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableECommerceWeb", "DurableECommerceWeb\DurableECommerceWeb.csproj", "{484DA20F-1F96-4CC7-A83F-5010C4D6AE66}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableECommerceWeb", "DurableECommerceWeb\DurableECommerceWeb.csproj", "{484DA20F-1F96-4CC7-A83F-5010C4D6AE66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

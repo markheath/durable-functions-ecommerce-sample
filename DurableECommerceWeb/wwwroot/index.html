@@ -12,20 +12,20 @@
 </head>
 <body>
 
-    <div class="text-center bg-light" style="margin-bottom:0">
+    <div class="text-center bg-light mb-0">
         <h1>Durable Functions Demo Shop</h1>
         <p>Buy a training course!</p>
     </div>
     <div id="app" class="container">
         <div class="row">
-            <div class="col-md-4" v-for="product in products">
+            <div class="col-md-4" v-for="product in products" :key="product.id">
                 <div class="card">
                     <img class="card-img-top" :src="product.image" :alt="product.name">
                     <div class="card-body">
                         <h4 class="card-title">{{product.name}}</h4>
                         <p class="card-text">Some example text.</p>
-                        <a href="#" :data-product="product.id" @click="buy"
-                           :data-price="product.price" class="btn btn-primary purchase">Buy now</a>
+                        <a href="#" @click="buy(product)"
+                           class="btn btn-primary purchase">Buy now</a>
                     </div>
                 </div>
             </div>
@@ -33,7 +33,7 @@
         <div class="row" v-if="orderCreated">
             <div class="alert alert-success">
                 <strong>Great choice!</strong>
-                Thank you for purchasing <strong>{{product}}</strong>. Your order number is <strong>{{orderId}}</strong>
+                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. Your order number is <strong>{{orderId}}</strong>
             </div>
         </div>
         <div class="row">
@@ -51,9 +51,10 @@
     </div>
 
     <script>
-        Vue.component('order-status', {
-            props: ['orderStatus'],
-            template: `
+        Vue.component('order-status',
+            {
+                props: ['orderStatus'],
+                template: `
     <div class="card">
         <div class="card-body">
             <ul>
@@ -70,24 +71,24 @@
         
     </div>
   `
-        })
+            });
 
-        const postData = (url = ``, data = {}) => {
+        const postData = (url = '', data = {}) => {
             // Default options are marked with *
-            return fetch(url, {
-                method: "POST", // *GET, POST, PUT, DELETE, etc.
-                mode: "no-cors", // no-cors, cors, *same-origin
-                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                credentials: "same-origin", // include, same-origin, *omit
-                headers: {
-                    "Content-Type": "application/json; charset=utf-8",
-                    // "Content-Type": "application/x-www-form-urlencoded",
-                },
-                redirect: "follow", // manual, *follow, error
-                referrer: "no-referrer", // no-referrer, *client
-                body: JSON.stringify(data), // body data type must match "Content-Type" header
-            })
-            .then(response => response.json()) // parses response to JSON
+            return fetch(url,
+                    {
+                        method: "POST", // *GET, POST, PUT, DELETE, etc.
+                        mode: "no-cors", // no-cors, cors, *same-origin
+                        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                        credentials: "same-origin", // include, same-origin, *omit
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8"
+                        },
+                        redirect: "follow", // manual, *follow, error
+                        referrer: "no-referrer", // no-referrer, *client
+                        body: JSON.stringify(data) // body data type must match "Content-Type" header
+                    })
+                .then(response => response.json()); // parses response to JSON
         };
 
         var app = new Vue({
@@ -95,39 +96,48 @@
             data: {
                 products: [
                     { id: 'performance-tuning', name: 'Performance Tuning', price: 2000, image: 'images/strat.jpg' },
-                    { id: 'achieving-your-goals', name: 'Achieving Your Goals', price: 400, image: 'images/football.jpg' },
-                    { id: 'cake-driven-development', name: 'Cake Driven Development', price: 50, image: 'images/cakes.jpg' },
+                    {
+                        id: 'achieving-your-goals',
+                        name: 'Achieving Your Goals',
+                        price: 400,
+                        image: 'images/football.jpg'
+                    },
+                    {
+                        id: 'cake-driven-development',
+                        name: 'Cake Driven Development',
+                        price: 50,
+                        image: 'images/cakes.jpg'
+                    }
                 ],
                 orderCreated: false,
                 awaitingApproval: false,
-                orderId: -1,
-                product: "",
+                orderId: null,
+                orderedProduct: "",
                 orderStatus: null
             },
             methods: {
-                onOrderCreated: function (orderInfo, product) {
+                onOrderCreated: function(orderInfo) {
                     this.orderId = orderInfo.id;
                     this.orderCreated = true;
                 },
-                checkStatus: function (event) {
+                checkStatus: function(event) {
                     fetch(`/api/orderstatus/${this.orderId}`)
                         .then(response => response.json())
-                        .then(json => this.orderStatus = json)
+                        .then(json => this.orderStatus = json);
                 },
-                approve: function (event) {
+                approve: function(event) {
                     const status = event.target.dataset.approvalStatus;
-                    postData(`/api/approve/${this.orderId}`, status)
+                    postData(`/api/approve/${this.orderId}`, status);
                 },
-                buy: function (event) {
-                    this.product = event.target.dataset.product;
-                    const price = event.target.dataset.price;
-                    console.log(`purchased a ${this.product} for ${price}`);
-                    postData(`/api/CreateOrder`, { ProductId: this.product, Amount: price })
-                        .then(data => this.onOrderCreated(data, this.product))
+                buy: function(product) {
+                    this.orderedProduct = product;
+                    console.log(`purchased a ${product.id} for ${product.price}`);
+                    postData('/api/CreateOrder', { ProductId: product.id, Amount: product.price })
+                        .then(data => this.onOrderCreated(data))
                         .catch(error => console.dir(error));
                 }
             }
-        })
+        });
     </script>
 </body>
 </html>

@@ -35,7 +35,7 @@ namespace DurableECommerceWorkflow
                 {
                     // timed out
                     await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
-                    return "Order not approved";
+                    return new { Status = "NotApproved" }; 
                 }
 
             }
@@ -62,12 +62,12 @@ namespace DurableECommerceWorkflow
                 await ctx.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                     new RetryOptions(TimeSpan.FromSeconds(30), 3),
                     (order, pdfLocation, videoLocation));
-                return "Order processed successfully";
+                return new { Status = "Success", Pdf = pdfLocation, Video = videoLocation };
             }
             await ctx.CallActivityWithRetryAsync("A_SendProblemEmail",
                 new RetryOptions(TimeSpan.FromSeconds(30), 3),
                 order);
-            return "There was a problem processing this order";
+            return new { Status = "Problem" };
         }
 
         [FunctionName("O_ProcessOrder_V3")]

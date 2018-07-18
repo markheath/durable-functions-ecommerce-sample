@@ -8,6 +8,13 @@
       },
       "backendUri": "%WEB_HOST%/index.html"
     },
+    "proxyOrderStatus": {
+      "matchCondition": {
+        "methods": [ "GET" ],
+        "route": "/orderStatus/{id}"
+      },
+      "backendUri": "%WEB_HOST%/orderStatus.html?id={id}"
+    },
     "proxyImages": {
       "matchCondition": {
         "methods": [ "GET" ],

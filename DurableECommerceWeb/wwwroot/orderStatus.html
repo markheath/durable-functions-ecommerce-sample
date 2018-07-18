@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Durable Functions Shop</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+
+<div class="text-center bg-light mb-0">
+    <h1>Order Status</h1>
+</div>
+<div id="app" class="container">
+
+    <div class="row">
+        <form class="form-inline">
+            <label class="sr-only" for="inputOrderNumber">Order Number</label>
+            <input type="text" v-model="orderId" class="form-control" id="inputOrderNumber" placeholder="Order Number">
+            <button type="submit" class="btn btn-primary" @click="checkStatus">Check</button>
+        </form>
+
+    </div>
+    <div class="row">
+        <div class="col-md-6" v-if="orderStatus">
+            <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
+        </div>
+        <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
+            <h3>Approve order</h3>
+            <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
+            <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // get a query string parameter https://stackoverflow.com/a/901144/7532
+    function getParameterByName(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
+    function getOrderId() {
+        const id = getParameterByName('id');
+        if (id) return id;
+        var pathArray = window.location.pathname.split('/');
+        return pathArray[pathArray.length - 1];
+    }
+
+    Vue.component('order-status',
+        {
+            props: ['orderStatus'],
+            template: `
+    <div class="card">
+        <div class="card-body">
+            <ul>
+                <li><strong>Order Id: </strong>{{orderStatus.input.Id}}</li>
+                <li><strong>Product Id: </strong>{{orderStatus.input.ProductId}}</li>
+                <li v-if="orderStatus.input.PurchaserEmail"><strong>Purchaser Email: </strong>{{orderStatus.input.PurchaserEmail}}</li>
+                <li><strong>Created Time: </strong>{{orderStatus.createdTime}}</li>
+                <li><strong>Last Updated: </strong>{{orderStatus.lastUpdatedTime}}</li>
+                <li><strong>Runtime Status: </strong>{{orderStatus.runtimeStatus}}</li>
+                <li><strong>Custom Status: </strong>{{orderStatus.customStatus}}</li>
+                <li><strong>Output</strong>{{orderStatus.output}}</li>
+            </ul>
+        </div>
+        
+    </div>
+  `
+        });
+
+    const postData = (url = '', data = {}) => {
+        // Default options are marked with *
+        return fetch(url,
+                {
+                    method: "POST", // *GET, POST, PUT, DELETE, etc.
+                    mode: "no-cors", // no-cors, cors, *same-origin
+                    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                    credentials: "same-origin", // include, same-origin, *omit
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    redirect: "follow", // manual, *follow, error
+                    referrer: "no-referrer", // no-referrer, *client
+                    body: JSON.stringify(data) // body data type must match "Content-Type" header
+                })
+            .then(response => response.json()); // parses response to JSON
+    };
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            orderId: null,
+            orderStatus: null
+        },
+        mounted: function () {
+            this.orderId = getOrderId();
+            this.checkStatus();
+        },
+        methods: {
+            checkStatus: function(event) {
+                fetch(`/api/orderstatus/${this.orderId}`)
+                    .then(response => response.json())
+                    .then(json => this.orderStatus = json);
+            },
+            approve: function(event) {
+                const status = event.target.dataset.approvalStatus;
+                postData(`/api/approve/${this.orderId}`, status);
+            }
+        }
+    });
+</script>
+</body>
+</html>

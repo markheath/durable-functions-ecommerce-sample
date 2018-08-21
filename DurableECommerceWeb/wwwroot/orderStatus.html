@@ -21,7 +21,7 @@
         <form class="form-inline">
             <label class="sr-only" for="inputOrderNumber">Order Number</label>
             <input type="text" v-model="orderId" class="form-control" id="inputOrderNumber" placeholder="Order Number">
-            <button type="submit" class="btn btn-primary" @click="checkStatus">Check</button>
+            <button type="submit" class="btn btn-primary ml-2" @click="checkStatus">Check</button>
         </form>
     </div>
     <div class="row" v-if="errorMessage">
@@ -30,9 +30,11 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-6" v-if="orderStatus">
+        <div v-if="orderStatus">
             <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
         </div>
+    </div>
+    <div class="row">
         <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
             <h3>Approve order</h3>
             <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
@@ -42,19 +44,47 @@
 </div>
 
 <template id="orderStatusTemplate">
-    <div class="card">
-        <div class="card-body">
-            <ul>
-                <li><strong>Product Id: </strong>{{orderStatus.input.ProductId}}</li>
-                <li v-if="orderStatus.input.PurchaserEmail"><strong>Purchaser Email: </strong>{{orderStatus.input.PurchaserEmail}}</li>
-                <li><strong>Created Time: </strong>{{orderStatus.createdTime}}</li>
-                <li><strong>Last Updated: </strong>{{orderStatus.lastUpdatedTime}}</li>
-                <li><strong>Runtime Status: </strong>{{orderStatus.runtimeStatus}}</li>
-                <li><strong>Custom Status: </strong>{{orderStatus.customStatus}}</li>
-                <li><strong>Output</strong>{{orderStatus.output}}</li>
-            </ul>
-        </div>
-    </div>
+
+            <table class="table table-striped mt-2">
+                <tbody>
+                    <tr>
+                        <td><strong>Product Id: </strong></td>
+                        <td>{{orderStatus.input.ProductId}}</td>
+                    </tr>
+                    <tr v-if="orderStatus.input.PurchaserEmail">
+                        <td><strong>Purchaser Email: </strong></td>
+                        <td>{{orderStatus.input.PurchaserEmail}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Created Time: </strong></td>
+                        <td>{{orderStatus.createdTime | formatDateTime}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Last Updated: </strong></td>
+                        <td>{{orderStatus.lastUpdatedTime | formatDateTime}}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Runtime Status: </strong></td>
+                        <td>{{orderStatus.runtimeStatus | formatRuntimeStatus}}</td>
+                    </tr>
+                    <tr v-if="orderStatus.customStatus">
+                        <td><strong>Custom Status: </strong></td>
+                        <td>{{orderStatus.customStatus}}</td>
+                    </tr>
+                <tr v-if="orderStatus.output">
+                    <td><strong>Status: </strong></td>
+                    <td>{{orderStatus.output.Status}}</td>
+                </tr>
+                <tr v-if="orderStatus.output.Pdf">
+                    <td><strong>Downloads: </strong></td>
+                    <td><a class="btn btn-primary" :href="orderStatus.output.Pdf">PDF</a>
+                        <a class="btn btn-primary" :href="orderStatus.output.Video">Video</a>
+                    </td>
+                </tr>
+                </tbody>
+
+            </table>
+
 </template>
 
 <script>
@@ -79,7 +109,16 @@
     Vue.component('order-status',
         {
             props: ['orderStatus'],
-            template: '#orderStatusTemplate'
+            template: '#orderStatusTemplate',
+            filters: {
+                formatDateTime: function (value) {
+                    const d = new Date(value);
+                    return d.toLocaleString();
+                },
+                formatRuntimeStatus: function (value) {
+                    return ["Running", "Completed", "ContinuedAsNew", "Failed", "Canceled", "Terminated", "Pending"][value];
+                }
+            },
         });
 
     const postData = (url = '', data = {}) => {
@@ -111,6 +150,7 @@
             this.orderId = getOrderId();
             this.checkStatus();
         },
+
         methods: {
             checkStatus: function (event) {
                 if (event) event.preventDefault();

@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Durable Functions Shop Admin Console</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+
+<div class="text-center bg-light mb-0">
+    <h1>Admin Console</h1>
+</div>
+<div id="app" class="container">
+    <div class="row">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Order Id</th>
+                    <th>Created</th>
+                    <th>Product</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="order in orders" :key="order.input.Id">
+                    <td> <a :href="'orderStatus/' + order.input.Id">{{order.input.Id}}</a></td>
+                    <td>{{order.createdTime | formatDate}}</td>
+                    <td>{{order.input.ProductId}}</td>
+                    <td>{{order.runtimeStatus | formatRuntimeStatus}}</td>
+                    <td>
+                        <span v-if="order.customStatus === 'Needs approval'">
+                            <a href="#" class="btn btn-success approveButton" @click="approve(order, 'Approved')">Approve</a>
+                            <a href="#" class="btn btn-danger rejectButton" @click="approve(order, 'Rejected')">Reject</a>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row" v-if="errorMessage">
+        <div class="alert alert-danger">
+            {{errorMessage}}
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    const postData = (url = '', data = {}) => {
+        // Default options are marked with *
+        return fetch(url,
+            {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                mode: "no-cors", // no-cors, cors, *same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                credentials: "same-origin", // include, same-origin, *omit
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                redirect: "follow", // manual, *follow, error
+                referrer: "no-referrer", // no-referrer, *client
+                body: JSON.stringify(data) // body data type must match "Content-Type" header
+            });
+    };
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            orders: null,
+            errorMessage: null
+        },
+        mounted: function () {
+            this.getOrderStatuses();
+        },
+        filters: {
+            formatDate: function (value) {
+                const d = new Date(value);
+                return d.toLocaleDateString();
+            },
+            formatRuntimeStatus: function (value) {
+                switch (value) {
+                    case 0:
+                        return "Running";
+                    case 1:
+                        return "Completed";
+                }
+                return value;
+            }
+        },
+        methods: {
+            getOrderStatuses: function (event) {
+                if (event) event.preventDefault();
+                this.errorMessage = null;
+                fetch('/api/getallorders/')
+                    .then(response => response.json())
+                    .then(json => {
+                        //console.dir(json);
+                        this.orders = json;
+                    })
+                    .catch(err => console.dir(err));
+            },
+            approve: function(order, status) {
+                postData(`/api/approve/${order.input.Id}`, status)
+                    .then(_ => order.customStatus = '');
+            }
+        }
+    });
+</script>
+</body>
+</html>

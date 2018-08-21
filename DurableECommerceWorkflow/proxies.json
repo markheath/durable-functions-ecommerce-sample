@@ -15,6 +15,13 @@
       },
       "backendUri": "%WEB_HOST%/orderStatus.html?id={id}"
     },
+    "proxyAdmin": {
+      "matchCondition": {
+        "methods": [ "GET" ],
+        "route": "/manage"
+      },
+      "backendUri": "%WEB_HOST%/admin.html"
+    },
     "proxyImages": {
       "matchCondition": {
         "methods": [ "GET" ],

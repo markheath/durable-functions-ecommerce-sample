@@ -106,19 +106,21 @@
         return pathArray[pathArray.length - 1];
     }
 
+    Vue.filter('formatDateTime',
+        function(value) {
+            const d = new Date(value);
+            return d.toLocaleString();
+        });
+
+    Vue.filter('formatRuntimeStatus',
+        function (value) {
+            return ["Running", "Completed", "ContinuedAsNew", "Failed", "Canceled", "Terminated", "Pending"][value];
+        });
+
     Vue.component('order-status',
         {
             props: ['orderStatus'],
-            template: '#orderStatusTemplate',
-            filters: {
-                formatDateTime: function (value) {
-                    const d = new Date(value);
-                    return d.toLocaleString();
-                },
-                formatRuntimeStatus: function (value) {
-                    return ["Running", "Completed", "ContinuedAsNew", "Failed", "Canceled", "Terminated", "Pending"][value];
-                }
-            },
+            template: '#orderStatusTemplate'
         });
 
     const postData = (url = '', data = {}) => {

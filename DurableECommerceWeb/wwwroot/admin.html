@@ -70,6 +70,17 @@
             });
     };
 
+    Vue.filter('formatDate',
+        function(value) {
+            const d = new Date(value);
+            return d.toLocaleDateString();
+        });
+
+    Vue.filter('formatRuntimeStatus',
+        function (value) {
+            return ["Running", "Completed", "ContinuedAsNew", "Failed", "Canceled", "Terminated", "Pending"][value];
+        });
+
     var app = new Vue({
         el: '#app',
         data: {
@@ -78,21 +89,6 @@
         },
         mounted: function () {
             this.getOrderStatuses();
-        },
-        filters: {
-            formatDate: function (value) {
-                const d = new Date(value);
-                return d.toLocaleDateString();
-            },
-            formatRuntimeStatus: function (value) {
-                switch (value) {
-                    case 0:
-                        return "Running";
-                    case 1:
-                        return "Completed";
-                }
-                return value;
-            }
         },
         methods: {
             getOrderStatuses: function (event) {

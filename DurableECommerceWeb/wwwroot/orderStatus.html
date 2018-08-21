@@ -23,18 +23,22 @@
             <input type="text" v-model="orderId" class="form-control" id="inputOrderNumber" placeholder="Order Number">
             <button type="submit" class="btn btn-primary" @click="checkStatus">Check</button>
         </form>
-
     </div>
-    <div class="row">
-        <div class="col-md-6" v-if="orderStatus">
-            <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
-        </div>
-        <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
-            <h3>Approve order</h3>
-            <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
-            <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+    <div class="row" v-if="errorMessage">
+        <div class="alert alert-danger">
+            {{errorMessage}}
         </div>
     </div>
+<div class="row">
+    <div class="col-md-6" v-if="orderStatus">
+        <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
+    </div>
+    <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
+        <h3>Approve order</h3>
+        <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
+        <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+    </div>
+</div>
 </div>
 
 <script>
@@ -100,17 +104,28 @@
         el: '#app',
         data: {
             orderId: null,
-            orderStatus: null
+            orderStatus: null,
+            errorMessage: null
         },
         mounted: function () {
             this.orderId = getOrderId();
             this.checkStatus();
         },
         methods: {
-            checkStatus: function(event) {
+            checkStatus: function (event) {
+                if (event) event.preventDefault();
+                this.errorMessage = null;
+                this.orderStatus = null;
                 fetch(`/api/orderstatus/${this.orderId}`)
-                    .then(response => response.json())
-                    .then(json => this.orderStatus = json);
+                    .then(response => {
+                            if (response.status === 404) {
+                                this.errorMessage = "Order " + this.orderId + " not found";
+                            } else {
+                                response.json().then(json => this.orderStatus = json);
+                            }
+                        }
+                    )
+                    .catch(err => console.dir(err));
             },
             approve: function(event) {
                 const status = event.target.dataset.approvalStatus;

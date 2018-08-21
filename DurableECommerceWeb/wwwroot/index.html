@@ -25,54 +25,20 @@
                         <h4 class="card-title">{{product.name}}</h4>
                         <p class="card-text">Some example text.</p>
                         <a href="#" @click="buy(product)"
-                           class="btn btn-primary purchase">Buy now</a>
+                           class="btn btn-primary purchase">Buy now for ${{product.price}}</a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row" v-if="orderCreated">
+        <div class="row" v-if="orderId">
             <div class="alert alert-success">
                 <strong>Great choice!</strong>
-                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. Your order number is <strong>{{orderId}}</strong>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6" v-if="orderCreated">
-                <h3>Check Order Status</h3>
-                <a href="#" class="btn btn-primary" @click="checkStatus">Check</a>
-                <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
-            </div>
-            <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
-                <h3>Approve order</h3>
-                <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
-                <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. Your order number is <strong><a :href="'orderStatus/' + orderId">{{orderId}}</a></strong>
             </div>
         </div>
     </div>
 
     <script>
-        Vue.component('order-status',
-            {
-                props: ['orderStatus'],
-                template: `
-    <div class="card">
-        <div class="card-body">
-            <ul>
-                <li><strong>Order Id: </strong>{{orderStatus.input.Id}}</li>
-                <li><strong>Product Id: </strong>{{orderStatus.input.ProductId}}</li>
-                <li v-if="orderStatus.input.PurchaserEmail"><strong>Purchaser Email: </strong>{{orderStatus.input.PurchaserEmail}}</li>
-                <li><strong>Created Time: </strong>{{orderStatus.createdTime}}</li>
-                <li><strong>Last Updated: </strong>{{orderStatus.lastUpdatedTime}}</li>
-                <li><strong>Runtime Status: </strong>{{orderStatus.runtimeStatus}}</li>
-                <li><strong>Custom Status: </strong>{{orderStatus.customStatus}}</li>
-                <li><strong>Output</strong>{{orderStatus.output}}</li>
-            </ul>
-        </div>
-        
-    </div>
-  `
-            });
-
         const postData = (url = '', data = {}) => {
             // Default options are marked with *
             return fetch(url,
@@ -109,25 +75,12 @@
                         image: 'images/cakes.jpg'
                     }
                 ],
-                orderCreated: false,
-                awaitingApproval: false,
                 orderId: null,
-                orderedProduct: "",
-                orderStatus: null
+                orderedProduct: ""
             },
             methods: {
                 onOrderCreated: function(orderInfo) {
                     this.orderId = orderInfo.id;
-                    this.orderCreated = true;
-                },
-                checkStatus: function(event) {
-                    fetch(`/api/orderstatus/${this.orderId}`)
-                        .then(response => response.json())
-                        .then(json => this.orderStatus = json);
-                },
-                approve: function(event) {
-                    const status = event.target.dataset.approvalStatus;
-                    postData(`/api/approve/${this.orderId}`, status);
                 },
                 buy: function(product) {
                     this.orderedProduct = product;

@@ -29,17 +29,33 @@
             {{errorMessage}}
         </div>
     </div>
-<div class="row">
-    <div class="col-md-6" v-if="orderStatus">
-        <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
-    </div>
-    <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
-        <h3>Approve order</h3>
-        <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
-        <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+    <div class="row">
+        <div class="col-md-6" v-if="orderStatus">
+            <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
+        </div>
+        <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
+            <h3>Approve order</h3>
+            <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
+            <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+        </div>
     </div>
 </div>
-</div>
+
+<template id="orderStatusTemplate">
+    <div class="card">
+        <div class="card-body">
+            <ul>
+                <li><strong>Product Id: </strong>{{orderStatus.input.ProductId}}</li>
+                <li v-if="orderStatus.input.PurchaserEmail"><strong>Purchaser Email: </strong>{{orderStatus.input.PurchaserEmail}}</li>
+                <li><strong>Created Time: </strong>{{orderStatus.createdTime}}</li>
+                <li><strong>Last Updated: </strong>{{orderStatus.lastUpdatedTime}}</li>
+                <li><strong>Runtime Status: </strong>{{orderStatus.runtimeStatus}}</li>
+                <li><strong>Custom Status: </strong>{{orderStatus.customStatus}}</li>
+                <li><strong>Output</strong>{{orderStatus.output}}</li>
+            </ul>
+        </div>
+    </div>
+</template>
 
 <script>
     // get a query string parameter https://stackoverflow.com/a/901144/7532
@@ -63,22 +79,7 @@
     Vue.component('order-status',
         {
             props: ['orderStatus'],
-            template: `
-    <div class="card">
-        <div class="card-body">
-            <ul>
-                <li><strong>Product Id: </strong>{{orderStatus.input.ProductId}}</li>
-                <li v-if="orderStatus.input.PurchaserEmail"><strong>Purchaser Email: </strong>{{orderStatus.input.PurchaserEmail}}</li>
-                <li><strong>Created Time: </strong>{{orderStatus.createdTime}}</li>
-                <li><strong>Last Updated: </strong>{{orderStatus.lastUpdatedTime}}</li>
-                <li><strong>Runtime Status: </strong>{{orderStatus.runtimeStatus}}</li>
-                <li><strong>Custom Status: </strong>{{orderStatus.customStatus}}</li>
-                <li><strong>Output</strong>{{orderStatus.output}}</li>
-            </ul>
-        </div>
-        
-    </div>
-  `
+            template: '#orderStatusTemplate'
         });
 
     const postData = (url = '', data = {}) => {
@@ -132,6 +133,6 @@
             }
         }
     });
-</script>
+    </script>
 </body>
 </html>

@@ -17,6 +17,9 @@
 </div>
 <div id="app" class="container">
     <div class="row">
+
+        <!-- If you use a BS4 row, it should then contain one or more grid columns -->
+
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -52,7 +55,8 @@
 
 <script>
 
-
+    // Any need for these default values? The function won't work with any of these defaults?
+    // You can get away with just "method", "body" & "headers > content-type" for a POST. The rest here for completeness?
     const postData = (url = '', data = {}) => {
         // Default options are marked with *
         return fetch(url,
@@ -85,14 +89,17 @@
         el: '#app',
         data: {
             orders: null,
-            errorMessage: null
+            errorMessage: null // It appears errorMessage is never set to a real value?
         },
         mounted: function () {
             this.getOrderStatuses();
         },
         methods: {
-            getOrderStatuses: function (event) {
+            getOrderStatuses: function (event) { // Can use ES6 arrow function
+
+                // Any need for this line? Function only called from "mounted" lifecycle hook so no event to prevent default?
                 if (event) event.preventDefault();
+
                 this.errorMessage = null;
                 fetch('/api/getallorders/')
                     .then(response => response.json())
@@ -100,7 +107,7 @@
                         //console.dir(json);
                         this.orders = json;
                     })
-                    .catch(err => console.dir(err));
+                    .catch(err => console.dir(err)); // Is it better to use console.error here?
             },
             approve: function(order, status) {
                 postData(`/api/approve/${order.input.Id}`, status)

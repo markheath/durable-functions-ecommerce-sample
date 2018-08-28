@@ -18,22 +18,29 @@
 <div id="app" class="container">
 
     <div class="row">
+
+        <!-- If you use a BS4 row, it should then contain one or more grid columns -->
+
         <form class="form-inline">
             <label class="sr-only" for="inputOrderNumber">Order Number</label>
             <input type="text" v-model="orderId" class="form-control" id="inputOrderNumber" placeholder="Order Number">
             <button type="submit" class="btn btn-primary ml-2" @click="checkStatus">Check</button>
         </form>
     </div>
-    <div class="row" v-if="errorMessage">
+    <div class="row" v-if="errorMessage"><!-- If you use a BS4 row, it should then contain one or more grid columns -->
         <div class="alert alert-danger">
             {{errorMessage}}
         </div>
     </div>
-    <div class="row">
+    <div class="row"><!-- If you use a BS4 row, it should then contain one or more grid columns -->
+
+        <!-- There is a v-if="orderStatus" on the div and the <order-status>. Don't think you need both -->
         <div v-if="orderStatus">
             <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
         </div>
     </div>
+
+    <!-- Do you need a new row for this? Adding in the above <div v-if="orderStatus"> will make below v-if simpler -->
     <div class="row">
         <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
             <h3>Approve order</h3>
@@ -71,6 +78,7 @@
                         <td><strong>Custom Status: </strong></td>
                         <td>{{orderStatus.customStatus}}</td>
                     </tr>
+                <!-- Be good to align these <tr> with the others -->
                 <tr v-if="orderStatus.output">
                     <td><strong>Status: </strong></td>
                     <td>{{orderStatus.output.Status}}</td>
@@ -89,6 +97,8 @@
 
 <script>
     // get a query string parameter https://stackoverflow.com/a/901144/7532
+
+    // Can this code be moved to the bottom of the <script>? Want to focus on the Vue code / have this first?
     function getParameterByName(name, url) {
         if (!url) url = window.location.href;
         name = name.replace(/[\[\]]/g, '\\$&');
@@ -154,8 +164,8 @@
         },
 
         methods: {
-            checkStatus: function (event) {
-                if (event) event.preventDefault();
+            checkStatus: function (event) { // Can use ES6 arrow function
+                if (event) event.preventDefault(); // Any need for this line? Function only called from "mounted"?
                 this.errorMessage = null;
                 this.orderStatus = null;
                 fetch(`/api/orderstatus/${this.orderId}`)
@@ -167,9 +177,10 @@
                             }
                         }
                     )
-                    .catch(err => console.dir(err));
+                    .catch(err => console.dir(err)); // Is it better to use console.error here?
             },
             approve: function(event) {
+                // Should error message be cleared here and set if there was an approve HTTP request error?
                 const status = event.target.dataset.approvalStatus;
                 postData(`/api/approve/${this.orderId}`, status);
             }

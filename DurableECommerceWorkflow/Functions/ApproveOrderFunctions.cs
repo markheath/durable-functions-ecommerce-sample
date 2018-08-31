@@ -25,7 +25,10 @@ namespace DurableECommerceWorkflow
             {
                 return new NotFoundResult();
             }
-            await client.RaiseEventAsync(order.OrchestrationId, "OrderApprovalResult", "Approved");
+
+            var body = await req.ReadAsStringAsync(); // should be "Approved" or "Rejected"
+            var status = JsonConvert.DeserializeObject<string>(body);
+            await client.RaiseEventAsync(order.OrchestrationId, "OrderApprovalResult", status);
 
             return new OkResult();
         }

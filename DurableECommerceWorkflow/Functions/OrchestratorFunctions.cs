@@ -31,9 +31,11 @@ namespace DurableECommerceWorkflow
                 var approvalResult = await ctx.WaitForExternalEvent<string>("OrderApprovalResult", TimeSpan.FromSeconds(180), null);
                 ctx.SetCustomStatus(""); // clear the needs approval flag
 
-                if (approvalResult == null)
+                if (approvalResult != "Approved")
                 {
-                    // timed out
+                    // timed out or got a rejected
+                    if (!ctx.IsReplaying)
+                        log.Warning($"Not approved [{approvalResult}]");
                     await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
                     return new { Status = "NotApproved" }; 
                 }

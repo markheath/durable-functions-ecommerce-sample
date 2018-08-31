@@ -37,8 +37,8 @@
     <div class="row">
         <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
             <h3>Approve order</h3>
-            <a href="#" data-approvalStatus="Approved" class="btn btn-success approveButton" @click="approve">Approve</a>
-            <a href="#" data-approvalStatus="Rejected" class="btn btn-danger rejectButton" @click="approve">Reject</a>
+            <a href="#" class="btn btn-success approveButton" @click="approve('Approved')">Approve</a>
+            <a href="#" class="btn btn-danger rejectButton" @click="approve('Rejected')">Reject</a>
         </div>
     </div>
 </div>
@@ -75,7 +75,7 @@
                     <td><strong>Status: </strong></td>
                     <td>{{orderStatus.output.Status}}</td>
                 </tr>
-                <tr v-if="orderStatus.output.Pdf">
+                <tr v-if="orderStatus.output && orderStatus.output.Pdf">
                     <td><strong>Downloads: </strong></td>
                     <td><a class="btn btn-primary" :href="orderStatus.output.Pdf">PDF</a>
                         <a class="btn btn-primary" :href="orderStatus.output.Video">Video</a>
@@ -169,9 +169,8 @@
                     )
                     .catch(err => console.dir(err));
             },
-            approve: function(event) {
-                const status = event.target.dataset.approvalStatus;
-                postData(`/api/approve/${this.orderId}`, status);
+            approve: function(approvalStatus) {
+                postData(`/api/approve/${this.orderId}`, approvalStatus);
             }
         }
     });

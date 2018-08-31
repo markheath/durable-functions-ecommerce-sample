@@ -28,7 +28,7 @@ namespace DurableECommerceWorkflow
                 ctx.SetCustomStatus("Needs approval");
                 await ctx.CallActivityAsync("A_RequestOrderApproval", order);
 
-                var approvalResult = await ctx.WaitForExternalEvent<string>("OrderApprovalResult", TimeSpan.FromSeconds(180));
+                var approvalResult = await ctx.WaitForExternalEvent<string>("OrderApprovalResult", TimeSpan.FromSeconds(180), null);
                 ctx.SetCustomStatus(""); // clear the needs approval flag
 
                 if (approvalResult == null)

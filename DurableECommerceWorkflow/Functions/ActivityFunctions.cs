@@ -78,8 +78,8 @@ namespace DurableECommerceWorkflow
                     TraceWriter log)
         {
             var (order, pdfLoc, videoLoc) = input;
-            log.Info($"Sending Email to {order.PurchaserEmail}");
-            var body = $"Thanks for your order, you can download your files here: " +
+            log.Info($"Sending Order Confirmation Email to {order.PurchaserEmail}");
+            var body = $"Thanks for ordering {order.ProductId}, you can download your files here: " +
                 $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
             await sender.PostAsync(message,log);
@@ -92,9 +92,9 @@ namespace DurableECommerceWorkflow
                     TraceWriter log)
         {
             log.Info($"Sending Problem Email {order.PurchaserEmail}");
-            var body = "We're very sorry there was a problem processing your order. <br/>" +
-                " Please contact customer support";
-            var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            var body = $"We're very sorry there was a problem processing your order for {order.ProductId}. <br/>" +
+                " Please contact customer support.";
+            var message = GenerateMail(order.PurchaserEmail, $"Problem with order {order.Id}", body);
             await sender.PostAsync(message,log);
         }
 
@@ -118,9 +118,9 @@ namespace DurableECommerceWorkflow
             TraceWriter log)
         {
             log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
-            var body = "We're very sorry we were not able to approve your order. <br/>" +
-                " Please contact customer support";
-            var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            var body = $"We're very sorry we were not able to approve your order for {order.ProductId}. <br/>" +
+                " Please contact customer support.";
+            var message = GenerateMail(order.PurchaserEmail, $"Order {order.Id} rejected", body);
             await sender.PostAsync(message,log);
         }
 
@@ -134,9 +134,10 @@ namespace DurableECommerceWorkflow
             var subject = $"Order {order.Id} requires approval";
             var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
 
-            var body = $"Please review {order.Id}<br>"
+            var approveUrl = $"http://localhost:7071/manage"; // todo: support correct URL when running in the cloud
+            var body = $"Please review <a href=\"{approveUrl}\">Order {order.Id}</a><br>"
                                + $"for product {order.ProductId}"
-                               + $"and amount {order.Amount}";
+                               + $" and amount ${order.Amount}";
 
             var message = GenerateMail(approverEmail, subject, body);
             await sender.PostAsync(message, log);

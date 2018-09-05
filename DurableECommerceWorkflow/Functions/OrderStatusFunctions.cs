@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -37,18 +38,11 @@ namespace DurableECommerceWorkflow
             TraceWriter log)
         {
             log.Info("getting all orders.");
-            // just get orders in the last day to keep manage screen simple
-            var statuses = await client.GetStatusAsync(DateTime.Today.AddDays(-1.0), null, 
-                new[]
-                {
-                    OrchestrationRuntimeStatus.Running, 
-                    OrchestrationRuntimeStatus.Completed,
-                    OrchestrationRuntimeStatus.Failed,
-                    OrchestrationRuntimeStatus.Pending,
-                    OrchestrationRuntimeStatus.Terminated,
-                    OrchestrationRuntimeStatus.Canceled
-
-                });
+            // just get orders in the last couple of hours to keep manage screen simple
+            // interested in orders of all statuses
+            var statuses = await client.GetStatusAsync(DateTime.Today.AddHours(-2.0), null, 
+                Enum.GetValues(typeof(OrchestrationRuntimeStatus)).Cast<OrchestrationRuntimeStatus>()
+                );
             return new OkObjectResult(statuses);
         }
     }

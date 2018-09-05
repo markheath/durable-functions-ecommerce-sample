@@ -39,7 +39,7 @@ namespace DurableECommerceWorkflow
             log.Info("Creating PDF");
             if (order.ProductId == "error")
                 throw new InvalidOperationException("Can't create the PDF for this product");
-            var fileName = $"{order.Id}/{order.ProductId}.pdf";
+            var fileName = $"{order.Id}/{order.ProductId}-pdf.txt";
             await assets.CreateIfNotExistsAsync();
             var blob = assets.GetBlockBlobReference(fileName);
             await blob.UploadTextAsync($"Example {order.ProductId} PDF for {order.PurchaserEmail}");
@@ -53,7 +53,7 @@ namespace DurableECommerceWorkflow
             TraceWriter log)
         {
             log.Info("Creating Watermarked Video");
-            var fileName = $"{order.Id}/{order.ProductId}.mp4";
+            var fileName = $"{order.Id}/{order.ProductId}-mp4.txt";
             await assets.CreateIfNotExistsAsync();
             var blob = assets.GetBlockBlobReference(fileName);
             await blob.UploadTextAsync($"Example {order.ProductId} Video for {order.PurchaserEmail}");

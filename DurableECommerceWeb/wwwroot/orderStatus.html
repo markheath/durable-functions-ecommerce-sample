@@ -18,7 +18,7 @@
 <div id="app" class="container">
 
     <div class="row">
-        <form class="form-inline">
+        <form class="form-inline col-md-12">
             <label class="sr-only" for="inputOrderNumber">Order Number</label>
             <input type="text" v-model="orderId" class="form-control" id="inputOrderNumber" placeholder="Order Number">
             <button type="submit" class="btn btn-primary ml-2" @click="checkStatus">Check</button>
@@ -29,13 +29,13 @@
             {{errorMessage}}
         </div>
     </div>
-    <div class="row">
-        <div v-if="orderStatus">
-            <order-status v-if="orderStatus" :order-status="orderStatus"></order-status>
+    <div class="row" v-if="orderStatus" >
+        <div class="col-md-6">
+            <order-status :order-status="orderStatus"></order-status>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
+    <div class="row" v-if="orderStatus && orderStatus.customStatus === 'Needs approval'">
+        <div class="col-md-6">
             <h3>Approve order</h3>
             <a href="#" class="btn btn-success approveButton" @click="approve('Approved')">Approve</a>
             <a href="#" class="btn btn-danger rejectButton" @click="approve('Rejected')">Reject</a>
@@ -44,47 +44,44 @@
 </div>
 
 <template id="orderStatusTemplate">
-
-            <table class="table table-striped mt-2">
-                <tbody>
-                    <tr>
-                        <td><strong>Product Id: </strong></td>
-                        <td>{{orderStatus.input.ProductId}}</td>
-                    </tr>
-                    <tr v-if="orderStatus.input.PurchaserEmail">
-                        <td><strong>Purchaser Email: </strong></td>
-                        <td>{{orderStatus.input.PurchaserEmail}}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Created Time: </strong></td>
-                        <td>{{orderStatus.createdTime | formatDateTime}}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Last Updated: </strong></td>
-                        <td>{{orderStatus.lastUpdatedTime | formatDateTime}}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Runtime Status: </strong></td>
-                        <td>{{orderStatus.runtimeStatus | formatRuntimeStatus}}</td>
-                    </tr>
-                    <tr v-if="orderStatus.customStatus">
-                        <td><strong>Custom Status: </strong></td>
-                        <td>{{orderStatus.customStatus}}</td>
-                    </tr>
-                <tr v-if="orderStatus.output">
-                    <td><strong>Status: </strong></td>
-                    <td>{{orderStatus.output.Status}}</td>
-                </tr>
-                <tr v-if="orderStatus.output && orderStatus.output.Pdf">
-                    <td><strong>Downloads: </strong></td>
-                    <td><a class="btn btn-primary" :href="orderStatus.output.Pdf">PDF</a>
-                        <a class="btn btn-primary" :href="orderStatus.output.Video">Video</a>
-                    </td>
-                </tr>
-                </tbody>
-
-            </table>
-
+    <table class="table table-striped mt-2">
+        <tbody>
+            <tr>
+                <td><strong>Product Id: </strong></td>
+                <td>{{orderStatus.input.ProductId}}</td>
+            </tr>
+            <tr v-if="orderStatus.input.PurchaserEmail">
+                <td><strong>Purchaser Email: </strong></td>
+                <td>{{orderStatus.input.PurchaserEmail}}</td>
+            </tr>
+            <tr>
+                <td><strong>Created Time: </strong></td>
+                <td>{{orderStatus.createdTime | formatDateTime}}</td>
+            </tr>
+            <tr>
+                <td><strong>Last Updated: </strong></td>
+                <td>{{orderStatus.lastUpdatedTime | formatDateTime}}</td>
+            </tr>
+            <tr>
+                <td><strong>Runtime Status: </strong></td>
+                <td>{{orderStatus.runtimeStatus | formatRuntimeStatus}}</td>
+            </tr>
+            <tr v-if="orderStatus.customStatus">
+                <td><strong>Custom Status: </strong></td>
+                <td>{{orderStatus.customStatus}}</td>
+            </tr>
+            <tr v-if="orderStatus.output">
+                <td><strong>Status: </strong></td>
+                <td>{{orderStatus.output.Status}}</td>
+            </tr>
+            <tr v-if="orderStatus.output && orderStatus.output.Pdf">
+                <td><strong>Downloads: </strong></td>
+                <td><a class="btn btn-primary" :href="orderStatus.output.Pdf">PDF</a>
+                    <a class="btn btn-primary" :href="orderStatus.output.Video">Video</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </template>
 
 <script>
@@ -123,23 +120,17 @@
             template: '#orderStatusTemplate'
         });
 
-    const postData = (url = '', data = {}) => {
-        // Default options are marked with *
-        return fetch(url,
+    const postData = (url) => 
+        fetch(url,
                 {
-                    method: "POST", // *GET, POST, PUT, DELETE, etc.
-                    mode: "no-cors", // no-cors, cors, *same-origin
-                    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                    credentials: "same-origin", // include, same-origin, *omit
+                    method: "POST",
                     headers: {
                         "Content-Type": "application/json; charset=utf-8"
                     },
-                    redirect: "follow", // manual, *follow, error
-                    referrer: "no-referrer", // no-referrer, *client
-                    body: JSON.stringify(data) // body data type must match "Content-Type" header
+                    body: JSON.stringify(data)
                 })
             .then(response => response.json()); // parses response to JSON
-    };
+    
 
     var app = new Vue({
         el: '#app',
@@ -167,9 +158,10 @@
                             }
                         }
                     )
-                    .catch(err => console.dir(err));
+                    .catch(err => console.error(err));
             },
-            approve: function(approvalStatus) {
+            approve: function (approvalStatus) {
+                this.errorMessage = null;
                 postData(`/api/approve/${this.orderId}`, approvalStatus);
             }
         }

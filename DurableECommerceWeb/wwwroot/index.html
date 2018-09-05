@@ -31,31 +31,25 @@
             </div>
         </div>
         <div class="row" v-if="orderId">
-            <div class="alert alert-success">
+            <div class="alert alert-success col-md-12">
                 <strong>Great choice!</strong>
-                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. Your order number is <strong><a :href="'orderStatus/' + orderId">{{orderId}}</a></strong>
+                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. 
+                Your order number is <strong><a :href="'orderStatus/' + orderId">{{orderId}}</a></strong>
             </div>
         </div>
     </div>
 
     <script>
-        const postData = (url = '', data = {}) => {
-            // Default options are marked with *
-            return fetch(url,
+        var postData = (url, data) => 
+            fetch(url,
                     {
-                        method: "POST", // *GET, POST, PUT, DELETE, etc.
-                        mode: "no-cors", // no-cors, cors, *same-origin
-                        cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-                        credentials: "same-origin", // include, same-origin, *omit
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json; charset=utf-8"
                         },
-                        redirect: "follow", // manual, *follow, error
-                        referrer: "no-referrer", // no-referrer, *client
-                        body: JSON.stringify(data) // body data type must match "Content-Type" header
+                        body: JSON.stringify(data)
                     })
-                .then(response => response.json()); // parses response to JSON
-        };
+                .then(response => response.json());
 
         var app = new Vue({
             el: '#app',
@@ -87,7 +81,7 @@
                     console.log(`purchased a ${product.id} for ${product.price}`);
                     postData('/api/CreateOrder', { ProductId: product.id, Amount: product.price })
                         .then(data => this.onOrderCreated(data))
-                        .catch(error => console.dir(error));
+                        .catch(error => console.error(error));
                 }
             }
         });

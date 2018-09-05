@@ -133,8 +133,9 @@ namespace DurableECommerceWorkflow
             log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
             var subject = $"Order {order.Id} requires approval";
             var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
+            var host = Environment.GetEnvironmentVariable("ApproverEmail");
 
-            var approveUrl = $"http://localhost:7071/manage"; // todo: support correct URL when running in the cloud
+            var approveUrl = $"{host}/manage";
             var body = $"Please review <a href=\"{approveUrl}\">Order {order.Id}</a><br>"
                                + $"for product {order.ProductId}"
                                + $" and amount ${order.Amount}";

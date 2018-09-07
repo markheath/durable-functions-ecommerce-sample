@@ -133,7 +133,7 @@ namespace DurableECommerceWorkflow
             log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
             var subject = $"Order {order.Id} requires approval";
             var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
-            var host = Environment.GetEnvironmentVariable("ApproverEmail");
+            var host = Environment.GetEnvironmentVariable("Host");
 
             var approveUrl = $"{host}/manage";
             var body = $"Please review <a href=\"{approveUrl}\">Order {order.Id}</a><br>"

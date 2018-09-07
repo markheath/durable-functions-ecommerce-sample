@@ -14,7 +14,7 @@ namespace DurableECommerceWorkflow
     {
         [FunctionName("CreateOrder")]
         public static async Task<IActionResult> CreateOrder(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             TraceWriter log)
@@ -36,7 +36,7 @@ namespace DurableECommerceWorkflow
 
         [FunctionName("NewPurchaseWebhook")]
         public static async Task<IActionResult> NewPurchaseWebhook(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             TraceWriter log)

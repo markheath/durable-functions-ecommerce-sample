@@ -13,7 +13,7 @@ namespace DurableECommerceWorkflow
     {
         [FunctionName("ApproveOrderById")]
         public static async Task<IActionResult> ApproveOrderById(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = "approve/{id}")]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
@@ -35,7 +35,7 @@ namespace DurableECommerceWorkflow
 
         [FunctionName("ApproveOrder")]
         public static async Task<IActionResult> ApproveOrder(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             TraceWriter log)

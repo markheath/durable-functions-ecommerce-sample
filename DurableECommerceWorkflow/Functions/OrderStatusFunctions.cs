@@ -13,7 +13,7 @@ namespace DurableECommerceWorkflow
     {
         [FunctionName("GetOrderStatus")]
         public static async Task<IActionResult> GetOrderStatus(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = "orderstatus/{id}")]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
@@ -32,7 +32,7 @@ namespace DurableECommerceWorkflow
 
         [FunctionName("GetAllOrders")]
         public static async Task<IActionResult> GetAllOrders(
-            [HttpTrigger(AuthorizationLevel.Function,
+            [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             TraceWriter log)

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace DurableECommerceWorkflow
@@ -17,9 +17,9 @@ namespace DurableECommerceWorkflow
                 "post", Route = "approve/{id}")]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
             [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
-            TraceWriter log, string id)
+            ILogger log, string id)
         {
-            log.Info($"Setting approval status of order {id}");
+            log.LogInformation($"Setting approval status of order {id}");
 
             if (order == null)
             {
@@ -38,13 +38,13 @@ namespace DurableECommerceWorkflow
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info("Received an approval result.");
+            log.LogInformation("Received an approval result.");
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var approvalResult = JsonConvert.DeserializeObject<ApprovalResult>(requestBody);
             await client.RaiseEventAsync(approvalResult.OrchestrationId, "OrderApprovalResult", approvalResult.Approved ? "Approved" : "Rejected");
-            log.Info($"Approval Result for {approvalResult.OrchestrationId} is {approvalResult.Approved}");
+            log.LogInformation($"Approval Result for {approvalResult.OrchestrationId} is {approvalResult.Approved}");
             return new OkResult();
         }
     }

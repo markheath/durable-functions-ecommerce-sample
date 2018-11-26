@@ -1,10 +1,10 @@
 ﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage.Blob;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DurableECommerceWorkflow
 {
@@ -15,9 +15,9 @@ namespace DurableECommerceWorkflow
         public static async Task SaveOrderToDatabase(
                             [ActivityTrigger] Order order,
                             [Table(OrderEntity.TableName)] IAsyncCollector<OrderEntity> table,
-                            TraceWriter log)
+                            ILogger log)
         {
-            log.Info("Saving order to database");
+            log.LogInformation("Saving order to database");
             await table.AddAsync(new OrderEntity
             {
                 PartitionKey = OrderEntity.OrderPartitionKey,
@@ -34,9 +34,9 @@ namespace DurableECommerceWorkflow
         public static async Task<string> CreatePersonalizedPdf(
                             [ActivityTrigger] Order order,
                             [Blob("assets")] CloudBlobContainer assets,
-                            TraceWriter log)
+                            ILogger log)
         {
-            log.Info("Creating PDF");
+            log.LogInformation("Creating PDF");
             if (order.ProductId == "error")
                 throw new InvalidOperationException("Can't create the PDF for this product");
             var fileName = $"{order.Id}/{order.ProductId}-pdf.txt";
@@ -50,9 +50,9 @@ namespace DurableECommerceWorkflow
         public static async Task<string> CreateWatermarkedVideo(
             [ActivityTrigger] Order order,
             [Blob("assets")] CloudBlobContainer assets,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info("Creating Watermarked Video");
+            log.LogInformation("Creating Watermarked Video");
             var fileName = $"{order.Id}/{order.ProductId}-mp4.txt";
             await assets.CreateIfNotExistsAsync();
             var blob = assets.GetBlockBlobReference(fileName);
@@ -75,10 +75,10 @@ namespace DurableECommerceWorkflow
         public static async Task SendOrderConfirmationEmail(
                     [ActivityTrigger] (Order, string, string) input,
                     [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-                    TraceWriter log)
+                    ILogger log)
         {
             var (order, pdfLoc, videoLoc) = input;
-            log.Info($"Sending Order Confirmation Email to {order.PurchaserEmail}");
+            log.LogInformation($"Sending Order Confirmation Email to {order.PurchaserEmail}");
             var body = $"Thanks for ordering {order.ProductId}, you can download your files here: " +
                 $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
@@ -89,9 +89,9 @@ namespace DurableECommerceWorkflow
         public static async Task SendProblemEmail(
                     [ActivityTrigger] Order order,
                     [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-                    TraceWriter log)
+                    ILogger log)
         {
-            log.Info($"Sending Problem Email {order.PurchaserEmail}");
+            log.LogInformation($"Sending Problem Email {order.PurchaserEmail}");
             var body = $"We're very sorry there was a problem processing your order for {order.ProductId}. <br/>" +
                 " Please contact customer support.";
             var message = GenerateMail(order.PurchaserEmail, $"Problem with order {order.Id}", body);
@@ -115,9 +115,9 @@ namespace DurableECommerceWorkflow
         public static async Task SendNotApprovedEmail(
             [ActivityTrigger] Order order,
             [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info($"Sending Not Approved Email {order.PurchaserEmail}");
+            log.LogInformation($"Sending Not Approved Email {order.PurchaserEmail}");
             var body = $"We're very sorry we were not able to approve your order for {order.ProductId}. <br/>" +
                 " Please contact customer support.";
             var message = GenerateMail(order.PurchaserEmail, $"Order {order.Id} rejected", body);
@@ -128,9 +128,9 @@ namespace DurableECommerceWorkflow
         public static async Task RequestOrderApproval(
             [ActivityTrigger] Order order,
             [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info($"Requesting Approval for Order {order.PurchaserEmail}");
+            log.LogInformation($"Requesting Approval for Order {order.PurchaserEmail}");
             var subject = $"Order {order.Id} requires approval";
             var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
             var host = Environment.GetEnvironmentVariable("Host");
@@ -144,14 +144,14 @@ namespace DurableECommerceWorkflow
             await sender.PostAsync(message, log);
         }
 
-        private static async Task PostAsync(this IAsyncCollector<SendGridMessage> sender, SendGridMessage message, TraceWriter log)
+        private static async Task PostAsync(this IAsyncCollector<SendGridMessage> sender, SendGridMessage message, ILogger log)
         {
             // don't actually try to send SendGrid emails if we are just using example or missing email addresses
             var testMode = message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
                 .Any(e => String.IsNullOrEmpty(e) || e.Contains("@example") || e.Contains("@email"));
             if (testMode)
             {
-                log.Warning($"Sending email with body {message.HtmlContent}");
+                log.LogWarning($"Sending email with body {message.HtmlContent}");
             }
             else
             {

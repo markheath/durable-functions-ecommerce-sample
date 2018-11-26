@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace DurableECommerceWorkflow
 {
@@ -17,9 +17,9 @@ namespace DurableECommerceWorkflow
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info("Received a new order from website.");
+            log.LogInformation("Received a new order from website.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var order = JsonConvert.DeserializeObject<Order>(requestBody);
@@ -28,7 +28,7 @@ namespace DurableECommerceWorkflow
             var r = new Random();
             order.Id = r.Next(10000, 100000).ToString();
 
-            log.Warning($"Order {order.Id} for product {order.ProductId} amount {order.Amount}");
+            log.LogWarning($"Order {order.Id} for product {order.ProductId} amount {order.Amount}");
 
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             return new OkObjectResult(new { order.Id });
@@ -39,13 +39,13 @@ namespace DurableECommerceWorkflow
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
             [OrchestrationClient] DurableOrchestrationClient client,
-            TraceWriter log)
+            ILogger log)
         {
-            log.Info("Received an order webhook.");
+            log.LogInformation("Received an order webhook.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var order = JsonConvert.DeserializeObject<Order>(requestBody);
-            log.Info($"Order is from {order.PurchaserEmail} for product {order.ProductId} amount {order.Amount}");
+            log.LogInformation($"Order is from {order.PurchaserEmail} for product {order.ProductId} amount {order.Amount}");
 
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             var statusUris = client.CreateHttpManagementPayload(orchestrationId);

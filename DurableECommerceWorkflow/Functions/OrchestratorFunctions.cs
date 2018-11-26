@@ -1,7 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DurableECommerceWorkflow
 {
@@ -10,20 +10,20 @@ namespace DurableECommerceWorkflow
         [FunctionName("O_ProcessOrder")]
         public static async Task<object> ProcessOrder(
             [OrchestrationTrigger] DurableOrchestrationContext ctx,
-            TraceWriter log)
+            ILogger log)
         {
             var order = ctx.GetInput<Order>();
             order.OrchestrationId = ctx.InstanceId;
 
             if (!ctx.IsReplaying)
-                log.Info($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order for {order.ProductId}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
             if (order.Amount > 1000)
             {
                 if (!ctx.IsReplaying)
-                    log.Warning($"Need approval for {ctx.InstanceId}");
+                    log.LogWarning($"Need approval for {ctx.InstanceId}");
 
                 ctx.SetCustomStatus("Needs approval");
                 await ctx.CallActivityAsync("A_RequestOrderApproval", order);
@@ -35,7 +35,7 @@ namespace DurableECommerceWorkflow
                 {
                     // timed out or got a rejected
                     if (!ctx.IsReplaying)
-                        log.Warning($"Not approved [{approvalResult}]");
+                        log.LogWarning($"Not approved [{approvalResult}]");
                     await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
                     return new { Status = "NotApproved" }; 
                 }
@@ -56,7 +56,7 @@ namespace DurableECommerceWorkflow
             catch (Exception ex)
             {
                 if (!ctx.IsReplaying)
-                    log.Error($"Failed to create files", ex);
+                    log.LogError($"Failed to create files", ex);
             }
 
             if (pdfLocation != null && videoLocation != null)
@@ -75,12 +75,12 @@ namespace DurableECommerceWorkflow
         [FunctionName("O_ProcessOrder_V3")]
         public static async Task<object> ProcessOrderV3(
             [OrchestrationTrigger] DurableOrchestrationContext ctx,
-            TraceWriter log)
+            ILogger log)
         {
             var order = ctx.GetInput<Order>();
             
             if (!ctx.IsReplaying)
-                log.Info($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order for {order.ProductId}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
@@ -98,7 +98,7 @@ namespace DurableECommerceWorkflow
             catch (Exception ex)
             {
                 if (!ctx.IsReplaying)
-                    log.Error($"Failed to create files",ex);
+                    log.LogError($"Failed to create files",ex);
             }
 
             if (pdfLocation != null && videoLocation != null)
@@ -118,12 +118,12 @@ namespace DurableECommerceWorkflow
         [FunctionName("O_ProcessOrder_V2")]
         public static async Task<object> ProcessOrderV2(
             [OrchestrationTrigger] DurableOrchestrationContext ctx,
-            TraceWriter log)
+            ILogger log)
         {
             var order = ctx.GetInput<Order>();
 
             if (!ctx.IsReplaying)
-                log.Info($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order for {order.ProductId}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
@@ -144,12 +144,12 @@ namespace DurableECommerceWorkflow
         [FunctionName("O_ProcessOrder_V1")]
         public static async Task<object> ProcessOrderV1(
             [OrchestrationTrigger] DurableOrchestrationContext ctx,
-            TraceWriter log)
+            ILogger log)
         {
             var order = ctx.GetInput<Order>();
 
             if (!ctx.IsReplaying)
-                log.Info($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order for {order.ProductId}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
             var pdfLocation = await ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", order);

@@ -28,6 +28,13 @@
         "route": "/images/{*restOfPath}"
       },
       "backendUri": "%WEB_HOST%/images/{restOfPath}"
+    },
+    "proxyScripts": {
+      "matchCondition": {
+        "methods": [ "GET" ],
+        "route": "/scripts/{*restOfPath}"
+      },
+      "backendUri": "%WEB_HOST%/scripts/{restOfPath}"
     }
   }
 }

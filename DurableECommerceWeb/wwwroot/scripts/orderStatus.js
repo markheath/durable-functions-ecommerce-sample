@@ -10,7 +10,7 @@ function getParameterByName(name, url) {
 }
 
 function getOrderId() {
-    const id = getParameterByName('id');
+    var id = getParameterByName('id');
     if (id) return id;
     var pathArray = window.location.pathname.split('/');
     return pathArray[pathArray.length - 1];
@@ -18,7 +18,7 @@ function getOrderId() {
 
 Vue.filter('formatDateTime',
     function (value) {
-        const d = new Date(value);
+        var d = new Date(value);
         return d.toLocaleString();
     });
 
@@ -33,7 +33,7 @@ Vue.component('order-status',
         template: '#orderStatusTemplate'
     });
 
-const postData = (url, data) =>
+var postData = (url, data) =>
     fetch(url,
         {
             method: "POST",

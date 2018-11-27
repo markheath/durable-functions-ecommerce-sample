@@ -1,4 +1,4 @@
-﻿const postData = (url, data) => {
+﻿var postData = (url, data) => {
     return fetch(url,
         {
             method: "POST",
@@ -11,7 +11,7 @@
 
 Vue.filter('formatDate',
     function (value) {
-        const d = new Date(value);
+        var d = new Date(value);
         return d.toLocaleDateString();
     });
 

@@ -16,7 +16,7 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> CreateOrder(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClient client,
+            [OrchestrationClient] DurableOrchestrationClientBase client,
             ILogger log)
         {
             log.LogInformation("Received a new order from website.");
@@ -38,7 +38,7 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> NewPurchaseWebhook(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "post", Route = null)]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClient client,
+            [OrchestrationClient] DurableOrchestrationClientBase client,
             ILogger log)
         {
             log.LogInformation("Received an order webhook.");

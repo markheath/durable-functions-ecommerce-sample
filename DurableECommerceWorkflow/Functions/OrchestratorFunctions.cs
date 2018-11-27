@@ -8,8 +8,8 @@ namespace DurableECommerceWorkflow
     public static class OrchestratorFunctions
     {
         [FunctionName("O_ProcessOrder")]
-        public static async Task<object> ProcessOrder(
-            [OrchestrationTrigger] DurableOrchestrationContext ctx,
+        public static async Task<OrderResult> ProcessOrder(
+            [OrchestrationTrigger] DurableOrchestrationContextBase ctx,
             ILogger log)
         {
             var order = ctx.GetInput<Order>();
@@ -37,7 +37,7 @@ namespace DurableECommerceWorkflow
                     if (!ctx.IsReplaying)
                         log.LogWarning($"Not approved [{approvalResult}]");
                     await ctx.CallActivityAsync("A_SendNotApprovedEmail", order);
-                    return new { Status = "NotApproved" }; 
+                    return new OrderResult { Status = "NotApproved" }; 
                 }
 
             }
@@ -64,17 +64,17 @@ namespace DurableECommerceWorkflow
                 await ctx.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                     new RetryOptions(TimeSpan.FromSeconds(30), 3),
                     (order, pdfLocation, videoLocation));
-                return new { Status = "Success", Pdf = pdfLocation, Video = videoLocation };
+                return new OrderResult { Status = "Success", Pdf = pdfLocation, Video = videoLocation };
             }
             await ctx.CallActivityWithRetryAsync("A_SendProblemEmail",
                 new RetryOptions(TimeSpan.FromSeconds(30), 3),
                 order);
-            return new { Status = "Problem" };
+            return new OrderResult { Status = "Problem" };
         }
 
         [FunctionName("O_ProcessOrder_V3")]
-        public static async Task<object> ProcessOrderV3(
-            [OrchestrationTrigger] DurableOrchestrationContext ctx,
+        public static async Task<string> ProcessOrderV3(
+            [OrchestrationTrigger] DurableOrchestrationContextBase ctx,
             ILogger log)
         {
             var order = ctx.GetInput<Order>();
@@ -116,8 +116,8 @@ namespace DurableECommerceWorkflow
 
 
         [FunctionName("O_ProcessOrder_V2")]
-        public static async Task<object> ProcessOrderV2(
-            [OrchestrationTrigger] DurableOrchestrationContext ctx,
+        public static async Task<string> ProcessOrderV2(
+            [OrchestrationTrigger] DurableOrchestrationContextBase ctx,
             ILogger log)
         {
             var order = ctx.GetInput<Order>();
@@ -142,8 +142,8 @@ namespace DurableECommerceWorkflow
 
         // basic orchestrator, calls all functions in sequence
         [FunctionName("O_ProcessOrder_V1")]
-        public static async Task<object> ProcessOrderV1(
-            [OrchestrationTrigger] DurableOrchestrationContext ctx,
+        public static async Task<string> ProcessOrderV1(
+            [OrchestrationTrigger] DurableOrchestrationContextBase ctx,
             ILogger log)
         {
             var order = ctx.GetInput<Order>();

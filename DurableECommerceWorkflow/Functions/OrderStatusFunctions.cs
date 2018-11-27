@@ -15,7 +15,7 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> GetOrderStatus(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = "orderstatus/{id}")]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClient client,
+            [OrchestrationClient] DurableOrchestrationClientBase client,
             [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
             ILogger log, string id)
         {
@@ -34,7 +34,7 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> GetAllOrders(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = null)]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClient client,
+            [OrchestrationClient] DurableOrchestrationClientBase client,
             ILogger log)
         {
             log.LogInformation("getting all orders.");

@@ -50,6 +50,18 @@ var app = new Vue({
         approve: function (order, status) {
             postData(`/api/approve/${order.input.Id}`, status)
                 .then(_ => order.customStatus = '');
+        },
+        deleteOrder: function (order) {
+            fetch(`/api/order/${order.input.Id}`, { method: 'DELETE' })
+                .then(_ => {
+                    var index = this.orders.indexOf(order);
+                    if (index > -1) {
+                        this.orders.splice(index, 1);
+                    }
+                })
+                .catch(err => {
+                this.errorMessage = `failed to delete order (${err})`;
+            });
         }
     }
 });

@@ -30,6 +30,36 @@ namespace DurableECommerceWorkflow
             return new OkObjectResult(status);
         }
 
+        [FunctionName("DeleteOrder")]
+        public static async Task<IActionResult> DeleteOrder(
+                [HttpTrigger(AuthorizationLevel.Anonymous,
+                "delete", Route = "order/{id}")]HttpRequest req,
+                [OrchestrationClient] DurableOrchestrationClientBase client,
+                [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
+                ILogger log, string id)
+        {
+            
+            if (order == null)
+            {
+                log.LogWarning($"Cannot find order {id}");
+
+                return new NotFoundResult();
+            }
+            log.LogInformation($"Deleting order {id}");
+
+            var status = await client.GetStatusAsync(order.OrchestrationId);
+            if (status.RuntimeStatus == OrchestrationRuntimeStatus.Running)
+            {
+                log.LogWarning($"Cannot find order {id}");
+
+                return new BadRequestResult();
+
+            }
+            await client.PurgeInstanceHistoryAsync(order.OrchestrationId);
+
+            return new OkResult();
+        }
+
         [FunctionName("GetAllOrders")]
         public static async Task<IActionResult> GetAllOrders(
             [HttpTrigger(AuthorizationLevel.Anonymous,

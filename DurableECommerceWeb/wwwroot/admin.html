@@ -39,6 +39,9 @@
                             <a href="#" class="btn btn-success approveButton" @click="approve(order, 'Approved')">Approve</a>
                             <a href="#" class="btn btn-danger rejectButton" @click="approve(order, 'Rejected')">Reject</a>
                         </span>
+                        <span v-if="order.runtimeStatus !== 'Running'">
+                            <a href="#" class="btn btn-danger deleteButton" @click="deleteOrder(order)">Delete</a>
+                        </span>
                     </td>
                 </tr>
                 </tbody>

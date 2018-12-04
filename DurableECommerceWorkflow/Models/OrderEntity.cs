@@ -11,7 +11,7 @@ namespace DurableECommerceWorkflow
         public string PartitionKey { get; set; } = OrderPartitionKey;
         public string RowKey { get; set; }
         public string OrchestrationId { get; set; }
-        public string ProductId { get; set; }
+        public string Items { get; set; }
         public string Email { get; set; }
         public DateTime OrderDate { get; set; }
         public decimal Amount { get; set; }

@@ -23,40 +23,27 @@ namespace DurableECommerceWorkflow
                 PartitionKey = OrderEntity.OrderPartitionKey,
                 RowKey = order.Id,
                 OrchestrationId = order.OrchestrationId,
-                ProductId = order.ProductId,
+                Items = string.Join(",",order.Items.Select(i => i.ProductId)),
                 Email = order.PurchaserEmail,
                 OrderDate = order.Date,
-                Amount = order.Amount
+                Amount = order.Items.Sum(i => i.Amount)
             });
         }
 
         [FunctionName("A_CreatePersonalizedPdf")]
         public static async Task<string> CreatePersonalizedPdf(
-                            [ActivityTrigger] Order order,
+                            [ActivityTrigger] (Order, OrderItem) orderInfo,
                             [Blob("assets")] CloudBlobContainer assets,
                             ILogger log)
         {
+            var (order, item) = orderInfo;
             log.LogInformation("Creating PDF");
-            if (order.ProductId == "error")
+            if (item.ProductId == "error")
                 throw new InvalidOperationException("Can't create the PDF for this product");
-            var fileName = $"{order.Id}/{order.ProductId}-pdf.txt";
+            var fileName = $"{order.Id}/{item.ProductId}-pdf.txt";
             await assets.CreateIfNotExistsAsync();
             var blob = assets.GetBlockBlobReference(fileName);
-            await blob.UploadTextAsync($"Example {order.ProductId} PDF for {order.PurchaserEmail}");
-            return GetSasUri(blob);
-        }
-
-        [FunctionName("A_CreateWatermarkedVideo")]
-        public static async Task<string> CreateWatermarkedVideo(
-            [ActivityTrigger] Order order,
-            [Blob("assets")] CloudBlobContainer assets,
-            ILogger log)
-        {
-            log.LogInformation("Creating Watermarked Video");
-            var fileName = $"{order.Id}/{order.ProductId}-mp4.txt";
-            await assets.CreateIfNotExistsAsync();
-            var blob = assets.GetBlockBlobReference(fileName);
-            await blob.UploadTextAsync($"Example {order.ProductId} Video for {order.PurchaserEmail}");
+            await blob.UploadTextAsync($"Example {item.ProductId} PDF for {order.PurchaserEmail}");
             return GetSasUri(blob);
         }
 
@@ -73,14 +60,14 @@ namespace DurableECommerceWorkflow
 
         [FunctionName("A_SendOrderConfirmationEmail")]
         public static async Task SendOrderConfirmationEmail(
-                    [ActivityTrigger] (Order, string, string) input,
+                    [ActivityTrigger] (Order, string[]) input,
                     [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
                     ILogger log)
         {
-            var (order, pdfLoc, videoLoc) = input;
+            var (order, files) = input;
             log.LogInformation($"Sending Order Confirmation Email to {order.PurchaserEmail}");
-            var body = $"Thanks for ordering {order.ProductId}, you can download your files here: " +
-                $"<a href=\"{pdfLoc}\">PDF</a> <a href=\"{videoLoc}\">Video</a>";
+            var body = $"Thanks for your order, you can download your files here: " +
+                string.Join(" ",order.Items.Zip(files, (i,f) => $"<a href=\"{f}\">{i.ProductId}</a><br/>"));
             var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
             await sender.PostAsync(message,log);
         }
@@ -92,7 +79,7 @@ namespace DurableECommerceWorkflow
                     ILogger log)
         {
             log.LogInformation($"Sending Problem Email {order.PurchaserEmail}");
-            var body = $"We're very sorry there was a problem processing your order for {order.ProductId}. <br/>" +
+            var body = "We're very sorry there was a problem processing your order. <br/>" +
                 " Please contact customer support.";
             var message = GenerateMail(order.PurchaserEmail, $"Problem with order {order.Id}", body);
             await sender.PostAsync(message,log);
@@ -118,7 +105,7 @@ namespace DurableECommerceWorkflow
             ILogger log)
         {
             log.LogInformation($"Sending Not Approved Email {order.PurchaserEmail}");
-            var body = $"We're very sorry we were not able to approve your order for {order.ProductId}. <br/>" +
+            var body = $"We're very sorry we were not able to approve your order #{order.Id}. <br/>" +
                 " Please contact customer support.";
             var message = GenerateMail(order.PurchaserEmail, $"Order {order.Id} rejected", body);
             await sender.PostAsync(message,log);
@@ -137,8 +124,8 @@ namespace DurableECommerceWorkflow
 
             var approveUrl = $"{host}/manage";
             var body = $"Please review <a href=\"{approveUrl}\">Order {order.Id}</a><br>"
-                               + $"for product {order.ProductId}"
-                               + $" and amount ${order.Amount}";
+                               + $"for product {string.Join(",",order.Items.Select(o=>o.ProductId))}"
+                               + $" and amount ${order.Total()}";
 
             var message = GenerateMail(approverEmail, subject, body);
             await sender.PostAsync(message, log);

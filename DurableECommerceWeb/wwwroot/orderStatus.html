@@ -46,12 +46,16 @@
     <table class="table table-striped mt-2">
         <tbody>
             <tr>
-                <td><strong>Product Id: </strong></td>
-                <td>{{orderStatus.input.ProductId}}</td>
+                <td><strong>Products: </strong></td>
+                <td>{{orderStatus.items}}</td>
             </tr>
-            <tr v-if="orderStatus.input.PurchaserEmail">
+            <tr>
+                <td><strong>Total: </strong></td>
+                <td>{{orderStatus.amount}}</td>
+            </tr>
+            <tr v-if="orderStatus.purchaserEmail">
                 <td><strong>Purchaser Email: </strong></td>
-                <td>{{orderStatus.input.PurchaserEmail}}</td>
+                <td>{{orderStatus.purchaserEmail}}</td>
             </tr>
             <tr>
                 <td><strong>Created Time: </strong></td>

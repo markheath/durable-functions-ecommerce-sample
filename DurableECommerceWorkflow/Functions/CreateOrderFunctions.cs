@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using System;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 
 namespace DurableECommerceWorkflow
@@ -28,7 +29,7 @@ namespace DurableECommerceWorkflow
             var r = new Random();
             order.Id = r.Next(10000, 100000).ToString();
 
-            log.LogWarning($"Order {order.Id} for product {order.ProductId} amount {order.Amount}");
+            log.LogWarning($"Order {order.Id} for {order.ItemCount()} items, total {order.Total()}");
 
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             return new OkObjectResult(new { order.Id });
@@ -45,7 +46,7 @@ namespace DurableECommerceWorkflow
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var order = JsonConvert.DeserializeObject<Order>(requestBody);
-            log.LogInformation($"Order is from {order.PurchaserEmail} for product {order.ProductId} amount {order.Amount}");
+            log.LogInformation($"Order is from {order.PurchaserEmail} for {order.ItemCount()} items, total {order.Total()}");
 
             var orchestrationId = await client.StartNewAsync("O_ProcessOrder", order);
             var statusUris = client.CreateHttpManagementPayload(orchestrationId);

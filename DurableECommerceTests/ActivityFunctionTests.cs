@@ -33,9 +33,8 @@ namespace DurableECommerceTests
 
             Assert.That(entity, Is.Not.Null);
             Assert.That(entity.OrchestrationId, Is.EqualTo(order.OrchestrationId));
-            Assert.That(entity.ProductId, Is.EqualTo(order.ProductId));
             Assert.That(entity.OrderDate, Is.EqualTo(order.Date));
-            Assert.That(entity.Amount, Is.EqualTo(order.Amount));
+            Assert.That(entity.Amount, Is.EqualTo(order.Total()));
             Assert.That(entity.Email, Is.EqualTo(order.PurchaserEmail));
             Assert.That(entity.RowKey, Is.EqualTo(order.Id));
             Assert.That(entity.PartitionKey, Is.EqualTo(OrderEntity.OrderPartitionKey));
@@ -45,17 +44,18 @@ namespace DurableECommerceTests
         {
             var order = new Order
             {
-                Amount = 1234,
                 Id = "102030",
                 OrchestrationId = "100200",
-                ProductId = "Prod1",
+                Items = new []
+                {
+                    new OrderItem {ProductId = "Prod1", Amount = 1234 }
+                },
                 Date = DateTime.Now,
                 PurchaserEmail = "test@example.com"
             };
             return order;
         }
         // ActivityFunctions.CreatePersonalizedPdf - can't easily mock a CloudBlobContainer
-        // ActivityFunctions.CreateWatermarkedVideo - can't easily mock a CloudBlobContainer
 
     }
 }

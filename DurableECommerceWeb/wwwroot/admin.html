@@ -32,7 +32,7 @@
                 <tr v-for="order in orders" :key="order.input.Id">
                     <td> <a :href="'orderStatus/' + order.input.Id">{{order.input.Id}}</a></td>
                     <td>{{order.createdTime | formatDate}}</td>
-                    <td>{{order.input.ProductId}}</td>
+                    <td>{{order.input.Items | formatOrderItems}}</td>
                     <td>{{order.runtimeStatus | formatRuntimeStatus}}</td>
                     <td>
                         <span v-if="order.customStatus === 'Needs approval'">

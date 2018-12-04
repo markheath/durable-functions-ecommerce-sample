@@ -1,5 +1,8 @@
 ﻿using Microsoft.Azure.WebJobs;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -16,11 +19,13 @@ namespace DurableECommerceWorkflow
             order.OrchestrationId = ctx.InstanceId;
 
             if (!ctx.IsReplaying)
-                log.LogInformation($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order #{order.Id}");
+
+            var total = order.Items.Sum(i => i.Amount);
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
-            if (order.Amount > 1000)
+            if (total > 1000)
             {
                 if (!ctx.IsReplaying)
                     log.LogWarning($"Need approval for {ctx.InstanceId}");
@@ -42,16 +47,18 @@ namespace DurableECommerceWorkflow
 
             }
 
-            string pdfLocation = null;
-            string videoLocation = null;
+            string[] downloads = null;
             try
             {
                 // create files in parallel
-                var pdfTask = ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", order);
-                var videoTask = ctx.CallActivityAsync<string>("A_CreateWatermarkedVideo", order);
-                await Task.WhenAll(pdfTask, videoTask);
-                pdfLocation = pdfTask.Result;
-                videoLocation = videoTask.Result;
+                var tasks = new List<Task<string>>();
+                foreach (var item in order.Items)
+                {
+                    tasks.Add(ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", (order,item)));
+                }
+
+                downloads = await Task.WhenAll(tasks);
+
             }
             catch (Exception ex)
             {
@@ -59,12 +66,12 @@ namespace DurableECommerceWorkflow
                     log.LogError($"Failed to create files", ex);
             }
 
-            if (pdfLocation != null && videoLocation != null)
+            if (downloads != null)
             {
                 await ctx.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                     new RetryOptions(TimeSpan.FromSeconds(30), 3),
-                    (order, pdfLocation, videoLocation));
-                return new OrderResult { Status = "Success", Pdf = pdfLocation, Video = videoLocation };
+                    (order, downloads));
+                return new OrderResult { Status = "Success", Downloads = downloads };
             }
             await ctx.CallActivityWithRetryAsync("A_SendProblemEmail",
                 new RetryOptions(TimeSpan.FromSeconds(30), 3),

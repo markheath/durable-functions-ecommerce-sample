@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DurableECommerceWorkflow;
+using ImpromptuInterface;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -28,14 +30,13 @@ namespace DurableECommerceTests
 
             context.Verify(c => c.CallActivityAsync("A_SaveOrderToDatabase", order), Times.Once);
             context.Verify(c => c.CallActivityAsync("A_RequestOrderApproval", order), Times.Never);
-            context.Verify(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", order), Times.Once);
-            context.Verify(c => c.CallActivityAsync<string>("A_CreateWatermarkedVideo", order), Times.Once);
+            context.Verify(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", It.IsAny<object>()), Times.Once);
 
             context.Verify(c => c.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                 It.IsAny<RetryOptions>(),
                 It.IsAny<object>()), Times.Once);
 
-            Assert.That(orderResult, Is.EqualTo(new OrderResult { Status = "Success", Pdf = "example.pdf", Video = "example.mp4" }).Using<OrderResult, OrderResult>(CompareOrderResult));
+            Assert.That(orderResult, Is.EqualTo(new OrderResult { Status = "Success", Downloads = new [] { "example.pdf" } }).Using<OrderResult, OrderResult>(CompareOrderResult));
         }
 
         [Test]
@@ -48,14 +49,13 @@ namespace DurableECommerceTests
 
             context.Verify(c => c.CallActivityAsync("A_SaveOrderToDatabase", order), Times.Once);
             context.Verify(c => c.CallActivityAsync("A_RequestOrderApproval", order), Times.Once);
-            context.Verify(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", order), Times.Once);
-            context.Verify(c => c.CallActivityAsync<string>("A_CreateWatermarkedVideo", order), Times.Once);
+            context.Verify(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", It.IsAny<object>()), Times.Once);
 
             context.Verify(c => c.CallActivityWithRetryAsync("A_SendOrderConfirmationEmail",
                 It.IsAny<RetryOptions>(),
                 It.IsAny<object>()), Times.Once);
 
-            Assert.That(orderResult, Is.EqualTo(new OrderResult { Status = "Success", Pdf = "example.pdf", Video = "example.mp4"}).Using<OrderResult, OrderResult>(CompareOrderResult));
+            Assert.That(orderResult, Is.EqualTo(new OrderResult { Status = "Success", Downloads = new[] { "example.pdf" } }).Using<OrderResult, OrderResult>(CompareOrderResult));
         }
 
 
@@ -94,10 +94,16 @@ namespace DurableECommerceTests
         {
             var order = new Order
             {
-                Amount = requiresApproval ? 12345 : 50,
                 Id = "102030",
                 OrchestrationId = "100200",
-                ProductId = "Prod1",
+                Items = new[]
+                {
+                    new OrderItem
+                    {
+                        Amount = requiresApproval ? 12345 : 50,
+                        ProductId = "Prod1",
+                    }
+                },
                 Date = DateTime.Now,
                 PurchaserEmail = "test@example.com"
             };
@@ -110,14 +116,16 @@ namespace DurableECommerceTests
             context.Setup(c => c.GetInput<Order>()).Returns(order);
             context.SetupGet(c => c.InstanceId).Returns("12345");
             if (throwErrorInPdf)
-                context.Setup(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", order)).ThrowsAsync(new InvalidOperationException("Failed to create PDF"));
+                context.Setup(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", It.IsAny<object>())).ThrowsAsync(new InvalidOperationException("Failed to create PDF"));
             else
-                context.Setup(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", order)).ReturnsAsync("example.pdf");
-            context.Setup(c => c.CallActivityAsync<string>("A_CreateWatermarkedVideo", order)).ReturnsAsync("example.mp4");
+                context.Setup(c => c.CallActivityAsync<string>("A_CreatePersonalizedPdf", It.IsAny<object>())).ReturnsAsync("example.pdf");
             context.Setup(c => c.WaitForExternalEvent<string>("OrderApprovalResult", It.IsAny<TimeSpan>(), null)).ReturnsAsync(approvalResult);
             return context;
         }
         private static bool CompareOrderResult(OrderResult expected, OrderResult actual) =>
-            expected.Status == actual.Status && expected.Pdf == actual.Pdf && expected.Video == actual.Video;
+            expected.Status == actual.Status && 
+                (expected.Downloads == null && actual.Downloads == null) ||
+                (expected.Downloads.Length == actual.Downloads.Length && 
+                expected.Downloads.Zip(actual.Downloads,(a,b) =>(a,b)).All(x => x.Item1 == x.Item2));
     }
 }

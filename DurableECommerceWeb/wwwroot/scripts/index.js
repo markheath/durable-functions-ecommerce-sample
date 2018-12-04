@@ -18,35 +18,53 @@ var app = new Vue({
                 id: 'performance-tuning',
                 name: 'Performance Tuning',
                 price: 2000,
+                description: 'Make things go faster',
                 image: 'images/strat.jpg'
             },
             {
                 id: 'achieving-your-goals',
                 name: 'Achieving Your Goals',
                 price: 400,
+                description: 'Make your dreams go true',
                 image: 'images/football.jpg'
             },
             {
                 id: 'cake-driven-development',
                 name: 'Cake Driven Development',
                 price: 50,
+                description: 'Make your code tastier',
                 image: 'images/cakes.jpg'
             }
         ],
         orderId: null,
-        orderedProduct: ""
+        cart: []
     },
     methods: {
         onOrderCreated: function (orderInfo) {
+            $('#shoppingCart').modal('hide');
             this.orderId = orderInfo.id;
         },
-        buy: function (product) {
-            this.orderedProduct = product;
-            //console.log(`purchased a ${product.id} for ${product.price}`);
+        addToCart: function(product) {
+            if (this.cart.indexOf(product) === -1)
+                this.cart.push(product);
+        },
+        removeFromCart: function (product) {
+            var index = this.cart.indexOf(product);
+            if (index > -1) {
+                this.cart.splice(index, 1);
+            }
+        },
+        buy: function () {
+            var items = [];
+            for (var i = 0; i < this.cart.length; i++) {
+                items.push({
+                    ProductId: this.cart[i].id,
+                    Amount: this.cart[i].price
+                });
+            }
             postData('/api/CreateOrder',
                 {
-                    ProductId: product.id,
-                    Amount: product.price,
+                    Items: items,
                     PurchaserEmail: 'durable-funcs-customer@mailinator.com'
                 })
                 .then(data => this.onOrderCreated(data))

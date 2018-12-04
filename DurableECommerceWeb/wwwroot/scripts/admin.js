@@ -15,6 +15,15 @@ Vue.filter('formatDate',
         return d.toLocaleDateString();
     });
 
+Vue.filter('formatOrderItems',
+    function (value) {
+        var x = "";
+        for (var i = 0; i < value.length; i++) {
+            x += value[i].ProductId + ", ";
+        }
+        return x.substring(0,x.length-2);
+    });
+
 Vue.filter('formatRuntimeStatus',
     function (value) {
         return ["Running",

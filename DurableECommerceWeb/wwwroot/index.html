@@ -5,27 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Durable Functions Shop</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
+<div id="app">
+<div class="text-center bg-light mb-0">
+    <button type="button" class="btn btn-primary float-right mr-2 mt-2" data-toggle="modal" data-target="#shoppingCart">
+                <i class="fas fa-shopping-cart"></i> Cart <span class="badge badge-primary badge-pill">{{cart.length}}</span>
+            </button>
+    <h1>Durable Functions Demo Shop</h1>
+    <p>Buy a training course!</p>
+</div>
 
-    <div class="text-center bg-light mb-0">
-        <h1>Durable Functions Demo Shop</h1>
-        <p>Buy a training course!</p>
+    <!-- Modal -->
+    <div class="modal fade" id="shoppingCart" tabindex="-1" role="dialog" aria-labelledby="shoppingCartLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shoppingCartLabel">Shopping Cart</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-group">
+                        <li v-for="item in cart" :key="item.id" class="list-group-item d-flex justify-content-between align-items-center">
+                            {{item.name}} (${{item.price}})
+                            <a href="#" @click="removeFromCart(item)"><i class="fas fa-trash text-danger"></i></a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" :disabled="(cart.length === 0)" @click="buy">Buy Now</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="app" class="container">
+
+    <div class="container">
         <div class="row">
             <div class="col-md-4" v-for="product in products" :key="product.id">
                 <div class="card">
                     <img class="card-img-top" :src="product.image" :alt="product.name">
                     <div class="card-body">
                         <h4 class="card-title">{{product.name}}</h4>
-                        <p class="card-text">Some example text.</p>
-                        <a href="#" @click="buy(product)"
-                           class="btn btn-primary purchase">Buy now for ${{product.price}}</a>
+                        <p class="card-text">{{product.description}}</p>
+                        <a href="#" @click="addToCart(product)"
+                           class="btn btn-primary purchase">Add to cart ${{product.price}}</a>
                     </div>
                 </div>
             </div>
@@ -33,12 +64,12 @@
         <div class="row mt-2" v-if="orderId">
             <div class="alert alert-success col-md-12">
                 <strong>Great choice!</strong>
-                Thank you for purchasing <strong>{{orderedProduct.name}}</strong>. 
+                Thank you for your purchase.
                 Your order number is <strong><a :href="'orderStatus/' + orderId">{{orderId}}</a></strong>
             </div>
         </div>
     </div>
-
-    <script src="scripts/index.js"></script>
+</div>
+<script src="scripts/index.js"></script>
 </body>
 </html>

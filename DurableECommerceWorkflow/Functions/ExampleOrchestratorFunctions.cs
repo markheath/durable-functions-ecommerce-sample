@@ -16,7 +16,7 @@ namespace DurableECommerceWorkflow.Functions
             var order = ctx.GetInput<Order>();
 
             if (!ctx.IsReplaying)
-                log.LogInformation($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order {order.Id}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
@@ -59,7 +59,7 @@ namespace DurableECommerceWorkflow.Functions
             var order = ctx.GetInput<Order>();
 
             if (!ctx.IsReplaying)
-                log.LogInformation($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order {order.Id}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
@@ -85,7 +85,7 @@ namespace DurableECommerceWorkflow.Functions
             var order = ctx.GetInput<Order>();
 
             if (!ctx.IsReplaying)
-                log.LogInformation($"Processing order for {order.ProductId}");
+                log.LogInformation($"Processing order {order.Id}");
 
             await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
             var pdfLocation = await ctx.CallActivityAsync<string>("A_CreatePersonalizedPdf", order);

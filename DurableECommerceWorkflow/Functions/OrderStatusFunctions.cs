@@ -26,8 +26,21 @@ namespace DurableECommerceWorkflow
                 return new NotFoundResult();
             }
             var status = await client.GetStatusAsync(order.OrchestrationId);
-            
-            return new OkObjectResult(status);
+
+            var statusObj = new
+            {
+                status.InstanceId,
+                status.CreatedTime,
+                status.CustomStatus,
+                status.Output,
+                status.LastUpdatedTime,
+                status.RuntimeStatus,
+                order.Items,
+                order.Amount,
+                PurchaserEmail = order.Email
+            };
+
+            return new OkObjectResult(statusObj);
         }
 
         [FunctionName("DeleteOrder")]

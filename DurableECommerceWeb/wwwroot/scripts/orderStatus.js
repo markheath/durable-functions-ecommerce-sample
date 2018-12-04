@@ -70,10 +70,6 @@ var app = new Vue({
                 }
                 )
                 .catch(err => console.error(err));
-        },
-        approve: function (approvalStatus) {
-            this.errorMessage = null;
-            postData(`/api/approve/${this.orderId}`, approvalStatus);
         }
     }
 });

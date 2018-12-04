@@ -33,13 +33,6 @@
             <order-status :order-status="orderStatus"></order-status>
         </div>
     </div>
-    <div class="row" v-if="false && orderStatus && orderStatus.customStatus === 'Needs approval'">
-        <div class="col-md-6">
-            <h3>Approve order</h3>
-            <a href="#" class="btn btn-success approveButton" @click="approve('Approved')">Approve</a>
-            <a href="#" class="btn btn-danger rejectButton" @click="approve('Rejected')">Reject</a>
-        </div>
-    </div>
 </div>
 
 <template id="orderStatusTemplate">
@@ -77,10 +70,12 @@
                 <td><strong>Status: </strong></td>
                 <td>{{orderStatus.output.Status}}</td>
             </tr>
-            <tr v-if="orderStatus.output && orderStatus.output.Pdf">
+            <tr v-if="orderStatus.output && orderStatus.output.Downloads">
                 <td><strong>Downloads: </strong></td>
-                <td><a class="btn btn-primary" :href="orderStatus.output.Pdf">PDF</a>
-                    <a class="btn btn-primary" :href="orderStatus.output.Video">Video</a>
+                <td>
+                    <span v-for="(download,index) in orderStatus.output.Downloads" :key="download">
+                        <a class="btn btn-primary" :href="download">Item {{index + 1}}</a>&nbsp;
+                    </span>
                 </td>
             </tr>
         </tbody>

@@ -25,7 +25,7 @@ var app = new Vue({
                 id: 'achieving-your-goals',
                 name: 'Achieving Your Goals',
                 price: 400,
-                description: 'Make your dreams go true',
+                description: 'Make your dreams come true',
                 image: 'images/football.jpg'
             },
             {

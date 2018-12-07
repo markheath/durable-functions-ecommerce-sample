@@ -43,6 +43,7 @@ var app = new Vue({
         onOrderCreated: function (orderInfo) {
             $('#shoppingCart').modal('hide');
             this.orderId = orderInfo.id;
+            this.cart.length = 0;
         },
         addToCart: function(product) {
             if (this.cart.indexOf(product) === -1)

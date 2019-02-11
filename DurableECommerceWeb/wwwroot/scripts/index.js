@@ -37,7 +37,8 @@ var app = new Vue({
             }
         ],
         orderId: null,
-        cart: []
+        cart: [],
+        email: 'durable-funcs-customer@mailinator.com'
     },
     methods: {
         onOrderCreated: function (orderInfo) {
@@ -66,7 +67,7 @@ var app = new Vue({
             postData('/api/CreateOrder',
                 {
                     Items: items,
-                    PurchaserEmail: 'durable-funcs-customer@mailinator.com'
+                    PurchaserEmail: this.email
                 })
                 .then(data => this.onOrderCreated(data))
                 .catch(error => console.error(error));

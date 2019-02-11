@@ -38,10 +38,14 @@
                             <a href="#" @click="removeFromCart(item)"><i class="fas fa-trash text-danger"></i></a>
                         </li>
                     </ul>
+                    <div class="form-group mt-2">
+                        <label for="exampleInputEmail1">Email address</label>
+                        <input type="email"  v-model="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" :disabled="(cart.length === 0)" @click="buy">Buy Now</button>
+                    <button type="button" class="btn btn-primary" :disabled="(email && cart.length === 0)" @click="buy">Buy Now</button>
                 </div>
             </div>
         </div>

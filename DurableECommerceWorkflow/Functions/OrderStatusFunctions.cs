@@ -1,13 +1,15 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using DurableECommerceWorkflow.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
-namespace DurableECommerceWorkflow
+namespace DurableECommerceWorkflow.Functions
 {
     public static class OrderStatusFunctions
     {
@@ -15,7 +17,7 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> GetOrderStatus(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = "orderstatus/{id}")]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClientBase client,
+            [DurableClient] IDurableOrchestrationClient client,
             [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
             ILogger log, string id)
         {
@@ -47,11 +49,11 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> DeleteOrder(
                 [HttpTrigger(AuthorizationLevel.Anonymous,
                 "delete", Route = "order/{id}")]HttpRequest req,
-                [OrchestrationClient] DurableOrchestrationClientBase client,
+                [DurableClient] IDurableOrchestrationClient client,
                 [Table(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
                 ILogger log, string id)
         {
-            
+
             if (order == null)
             {
                 log.LogWarning($"Cannot find order {id}");
@@ -77,13 +79,14 @@ namespace DurableECommerceWorkflow
         public static async Task<IActionResult> GetAllOrders(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = null)]HttpRequest req,
-            [OrchestrationClient] DurableOrchestrationClientBase client,
+            [DurableClient] IDurableOrchestrationClient client,
             ILogger log)
         {
             log.LogInformation("getting all orders.");
             // just get orders in the last couple of hours to keep manage screen simple
             // interested in orders of all statuses
-            var statuses = await client.GetStatusAsync(DateTime.Today.AddHours(-2.0), null, 
+            // ListInstancesAsync instead?
+            var statuses = await client.GetStatusAsync(DateTime.Today.AddHours(-2.0), null,
                 Enum.GetValues(typeof(OrchestrationRuntimeStatus)).Cast<OrchestrationRuntimeStatus>()
                 );
             return new OkObjectResult(statuses);

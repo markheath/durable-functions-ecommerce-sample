@@ -1,4 +1,5 @@
-﻿var postData = function (url, data) {
+﻿const baseUrl = 'http://localhost:7071/api'
+var postData = function (url, data) {
     return fetch(url,
         {
             method: "POST",
@@ -64,7 +65,7 @@ var app = new Vue({
                     Amount: this.cart[i].price
                 });
             }
-            postData('/api/CreateOrder',
+            postData(`${baseUrl}/CreateOrder`,
                 {
                     Items: items,
                     PurchaserEmail: this.email

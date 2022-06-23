@@ -1,4 +1,5 @@
-﻿var postData = (url, data) => {
+﻿const baseUrl = 'http://localhost:7071/api'
+var postData = (url, data) => {
     return fetch(url,
         {
             method: "POST",
@@ -47,7 +48,7 @@ var app = new Vue({
     methods: {
         getOrderStatuses: function () {
             this.errorMessage = null;
-            fetch('/api/getallorders/')
+            fetch(`${baseUrl}/getallorders/`)
                 .then(response => response.json())
                 .then(json => {
                     this.orders = json;
@@ -57,11 +58,11 @@ var app = new Vue({
                 });
         },
         approve: function (order, status) {
-            postData(`/api/approve/${order.input.Id}`, status)
+            postData(`${baseUrl}/approve/${order.input.Id}`, status)
                 .then(_ => order.customStatus = '');
         },
         deleteOrder: function (order) {
-            fetch(`/api/order/${order.input.Id}`, { method: 'DELETE' })
+            fetch(`${baseUrl}/order/${order.input.Id}`, { method: 'DELETE' })
                 .then(_ => {
                     var index = this.orders.indexOf(order);
                     if (index > -1) {

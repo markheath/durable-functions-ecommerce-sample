@@ -1,4 +1,5 @@
-﻿// get a query string parameter https://stackoverflow.com/a/901144/7532
+﻿const baseUrl = 'http://localhost:7071/api'
+// get a query string parameter https://stackoverflow.com/a/901144/7532
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, '\\$&');
@@ -60,7 +61,7 @@ var app = new Vue({
             if (event) event.preventDefault();
             this.errorMessage = null;
             this.orderStatus = null;
-            fetch(`/api/orderstatus/${this.orderId}`)
+            fetch(`${baseUrl}/orderstatus/${this.orderId}`)
                 .then(response => {
                     if (response.status === 404) {
                         this.errorMessage = `Order ${this.orderId} not found`;

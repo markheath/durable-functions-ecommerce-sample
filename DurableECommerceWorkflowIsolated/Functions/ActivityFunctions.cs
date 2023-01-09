@@ -4,7 +4,6 @@ using Azure.Storage.Sas;
 using DurableECommerceWorkflowIsolated.Extensions;
 using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;

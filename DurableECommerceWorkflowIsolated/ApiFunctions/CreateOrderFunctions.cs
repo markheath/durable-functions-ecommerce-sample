@@ -6,7 +6,6 @@ using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace DurableECommerceWorkflowIsolated.ApiFunctions;
 
@@ -30,7 +29,7 @@ public static class CreateOrderFunctions
         log.LogInformation("Received a new order from website.");
 
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-        var order = JsonConvert.DeserializeObject<Order>(requestBody);
+        var order = JsonSerializer.Deserialize<Order>(requestBody);
 
         // use shorter order ids for the webpage
         var r = new Random();
@@ -55,7 +54,7 @@ public static class CreateOrderFunctions
         log.LogInformation("Received an order webhook.");
 
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-        var order = JsonConvert.DeserializeObject<Order>(requestBody);
+        var order = JsonSerializer.Deserialize<Order>(requestBody);
         log.LogInformation($"Order is from {order.PurchaserEmail} for {order.ItemCount()} items, total {order.Total()}");
 
         var orchestrationId = await durableClientContext.Client.ScheduleNewOrchestrationInstanceAsync("O_ProcessOrder", order);

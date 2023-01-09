@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Azure.Data.Tables;
 using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
@@ -6,7 +7,6 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace DurableECommerceWorkflowIsolated.ApiFunctions
 {
@@ -126,19 +126,19 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
         {
             if (string.IsNullOrEmpty(serializedOutput)) return null;
             if (serializedOutput.StartsWith("{"))
-                return JsonConvert.DeserializeObject<OrderResult>(serializedOutput);
+                return JsonSerializer.Deserialize<OrderResult>(serializedOutput);
             return serializedOutput; // serialized output might not actually be serialized JSON at all!
         }
 
         private static Order? DeserializeInput(string? serializedInput)
         {
-            return JsonConvert.DeserializeObject<Order>(serializedInput ?? "{}");
+            return JsonSerializer.Deserialize<Order>(serializedInput ?? "{}");
         }
 
         private static string DeserializeCustomStatus(string? serializedCustomStatus)
         {
             if (string.IsNullOrEmpty(serializedCustomStatus)) return "";
-            var s = JsonConvert.DeserializeObject<string>(serializedCustomStatus);
+            var s = JsonSerializer.Deserialize<string>(serializedCustomStatus);
             return s ?? "";
         }
     }

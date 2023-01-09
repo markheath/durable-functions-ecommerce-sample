@@ -1,5 +1,4 @@
-﻿using Azure.Identity;
-using DurableECommerceWorkflowIsolated.Models;
+﻿using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;

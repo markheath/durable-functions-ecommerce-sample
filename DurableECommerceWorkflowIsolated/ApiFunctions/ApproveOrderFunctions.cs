@@ -1,12 +1,11 @@
-
 using System.Net;
+using System.Text.Json;
 using Azure.Data.Tables;
 using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace DurableECommerceWorkflowIsolated.ApiFunctions;
 
@@ -23,7 +22,6 @@ public static class ApproveOrderFunctions
         var log = functionContext.GetLogger(nameof(ApproveOrderById));
         log.LogInformation($"Setting approval status of order {id}");
 
-
         var tableServiceClient = functionContext.InstanceServices.GetRequiredService<TableServiceClient>();
         var tableClient = tableServiceClient.GetTableClient(OrderEntity.TableName);
         var orderResp = await tableClient.GetEntityIfExistsAsync<OrderEntity>(OrderEntity.OrderPartitionKey, id);
@@ -35,9 +33,9 @@ public static class ApproveOrderFunctions
         }
         var order = orderResp.Value;
 
-
         var body = await req.ReadAsStringAsync(); // should be "Approved" or "Rejected"
-        var status = JsonConvert.DeserializeObject<string>(body);
+        if (body == null) throw new InvalidOperationException("No approval status supplied");
+        var status = JsonSerializer.Deserialize<string>(body);
         await clientContext.Client.RaiseEventAsync(order.OrchestrationId, "OrderApprovalResult", status);
 
         return req.CreateResponse(HttpStatusCode.OK);
@@ -61,7 +59,7 @@ public static class ApproveOrderFunctions
     private static async Task<ApprovalResult> GetApprovalResult(HttpRequestData req)
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-        var approvalResult = JsonConvert.DeserializeObject<ApprovalResult>(requestBody);
+        var approvalResult = JsonSerializer.Deserialize<ApprovalResult>(requestBody);
         if (approvalResult == null || approvalResult.OrchestrationId == null) throw new InvalidOperationException("Invalid approval");
         return approvalResult;
     }

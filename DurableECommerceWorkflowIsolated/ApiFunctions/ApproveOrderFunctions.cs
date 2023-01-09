@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace DurableECommerceWorkflowIsolated.Functions;
+namespace DurableECommerceWorkflowIsolated.ApiFunctions;
 
 public static class ApproveOrderFunctions
 {

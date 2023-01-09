@@ -1,7 +1,6 @@
 using System.Net;
 using Azure.Data.Tables;
 using DurableECommerceWorkflowIsolated.Models;
-using Grpc.Core;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.DurableTask.Client;
@@ -9,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace DurableECommerceWorkflowIsolated.Functions
+namespace DurableECommerceWorkflowIsolated.ApiFunctions
 {
     public static class OrderStatusFunctions
     {
@@ -18,7 +17,7 @@ namespace DurableECommerceWorkflowIsolated.Functions
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = "orderstatus/{id}")]HttpRequestData req,
             [DurableClient] DurableClientContext clientContext,
-            // [TableInput(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
+            //[TableInput(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order, - fails with converting string to OrderEntity
             FunctionContext functionContext, string id)
         {
             var log = functionContext.GetLogger(nameof(GetOrderStatus));
@@ -33,6 +32,7 @@ namespace DurableECommerceWorkflowIsolated.Functions
                 return req.CreateResponse(HttpStatusCode.NotFound);
             }
             var order = orderResp.Value;
+
             var status = await clientContext.Client.GetInstanceMetadataAsync(order.OrchestrationId, true);
             if (status == null)
             {
@@ -73,6 +73,7 @@ namespace DurableECommerceWorkflowIsolated.Functions
 
             if (!orderResp.HasValue)
             {
+                // could be that there is an orchestration for this order, but its not in the order table anymore
                 log.LogWarning($"Cannot find order {id}");
                 return req.CreateResponse(HttpStatusCode.NotFound);
             }
@@ -121,9 +122,9 @@ namespace DurableECommerceWorkflowIsolated.Functions
             return response;
         }
 
-        private static object? DeserializeOutput(string? serializedOutput )
+        private static object? DeserializeOutput(string? serializedOutput)
         {
-            if (String.IsNullOrEmpty(serializedOutput)) return null;
+            if (string.IsNullOrEmpty(serializedOutput)) return null;
             if (serializedOutput.StartsWith("{"))
                 return JsonConvert.DeserializeObject<OrderResult>(serializedOutput);
             return serializedOutput; // serialized output might not actually be serialized JSON at all!

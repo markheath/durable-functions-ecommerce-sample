@@ -8,14 +8,14 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace DurableECommerceWorkflowIsolated.Functions;
+namespace DurableECommerceWorkflowIsolated.ApiFunctions;
 
 public static class CreateOrderFunctions
 {
 
     internal static readonly ObjectSerializer serializer = new JsonObjectSerializer(new JsonSerializerOptions
     {
-        PropertyNamingPolicy =  JsonNamingPolicy.CamelCase,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     });
 

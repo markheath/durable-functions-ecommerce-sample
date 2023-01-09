@@ -1,6 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 
-namespace DurableECommerceWorkflowIsolated.Functions;
+namespace DurableECommerceWorkflowIsolated.Extensions;
 
 internal static class BlobClientExtensions
 {

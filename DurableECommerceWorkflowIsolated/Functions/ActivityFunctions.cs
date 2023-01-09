@@ -1,76 +1,92 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
-using DurableECommerceWorkflow.Models;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using DurableECommerceWorkflowIsolated.Models;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SendGrid;
 using SendGrid.Helpers.Mail;
 
-namespace DurableECommerceWorkflow.Functions;
+namespace DurableECommerceWorkflowIsolated.Functions;
 
 public static class ActivityFunctions
 {
+    // doesn't seem like we can mix activity fnctions with table output at the moment? or some other issue
+    // https://github.com/Azure/azure-functions-dotnet-worker/blob/main/samples/Extensions/Table/TableFunction.cs
+    // [TableOutput(OrderEntity.TableName, Connection = "AzureWebJobsStorage")]
 
-    [FunctionName("A_SaveOrderToDatabase")]
-    public static async Task SaveOrderToDatabase(
+    [Function("A_SaveOrderToDatabase")]
+    public static void SaveOrderToDatabase(
                         [ActivityTrigger] Order order,
-                        [Table(OrderEntity.TableName)] IAsyncCollector<OrderEntity> table,
-                        ILogger log)
+                        FunctionContext context)
     {
-        log.LogInformation("Saving order to database");
-        await table.AddAsync(new OrderEntity
+        var log = context.GetLogger(nameof(SaveOrderToDatabase));
+        // can't inject as function parameter
+        var tableServiceClient = context.InstanceServices.GetRequiredService<TableServiceClient>();
+        log.LogInformation($"Saving order {order.Id} to database");
+        var tableClient = tableServiceClient.GetTableClient(OrderEntity.TableName);
+        
+        var orderEntity = new OrderEntity
         {
             PartitionKey = OrderEntity.OrderPartitionKey,
             RowKey = order.Id,
             OrchestrationId = order.OrchestrationId,
             Items = string.Join(",", order.Items.Select(i => i.ProductId)),
             Email = order.PurchaserEmail,
-            OrderDate = order.Date,
+            OrderDate = DateTime.UtcNow.Date,
             Amount = order.Items.Sum(i => i.Amount)
-        });
+        };
+        var resp = tableClient.AddEntity(orderEntity);
+        if (resp.IsError)
+        {
+            log.LogError($"Failed to write order {order.Id} for orchestration {order.OrchestrationId} to table storage");
+        }
     }
 
-    [FunctionName("A_CreatePersonalizedPdf")]
+    [Function("A_CreatePersonalizedPdf")]
     public static async Task<string> CreatePersonalizedPdf(
-                        [ActivityTrigger] (Order, OrderItem) orderInfo,
-                        [Blob("assets")] BlobContainerClient assetsContainer,
-                        ILogger log)
+                        [ActivityTrigger] PdfInfo pdfInfo,
+                         FunctionContext context)
     {
-        var (order, item) = orderInfo;
+        var log = context.GetLogger(nameof(CreatePersonalizedPdf));
+        var blobServiceClient = context.InstanceServices.GetRequiredService<BlobServiceClient>();
+        var assetsContainer = blobServiceClient.GetBlobContainerClient("assets");
+
         log.LogInformation("Creating PDF");
-        if (item.ProductId == "error")
+        if (pdfInfo.ProductId == "error")
             throw new InvalidOperationException("Can't create the PDF for this product");
-        var fileName = $"{order.Id}/{item.ProductId}-pdf.txt";
+        var fileName = $"{pdfInfo.OrderId}/{pdfInfo.ProductId}-pdf.txt";
         await assetsContainer.CreateIfNotExistsAsync();
         var blob = assetsContainer.GetBlobClient(fileName);
-        await blob.UploadTextAsync($"Example {item.ProductId} PDF for {order.PurchaserEmail}");
+        await blob.UploadTextAsync($"Example {pdfInfo.ProductId} PDF for {pdfInfo.PurchaserEmail}");
         return blob.GenerateSasUri(BlobSasPermissions.Read,
                 DateTimeOffset.UtcNow.AddDays(1)).ToString();
     }
 
-    [FunctionName("A_SendOrderConfirmationEmail")]
+    [Function("A_SendOrderConfirmationEmail")]
     public static async Task SendOrderConfirmationEmail(
-                [ActivityTrigger] (Order, string[]) input,
-                [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-                ILogger log)
+                [ActivityTrigger] ConfirmationInfo input,
+                FunctionContext context)
     {
-        var (order, files) = input;
-        log.LogInformation($"Sending Order Confirmation Email to {order.PurchaserEmail}");
+        var log = context.GetLogger(nameof(SendOrderConfirmationEmail));
+        var sender = context.InstanceServices.GetRequiredService<ISendGridClient>();
+
+        log.LogInformation($"Sending Order Confirmation Email to {input.Order.PurchaserEmail}");
         var body = $"Thanks for your order, you can download your files here: " +
-            string.Join(" ", order.Items.Zip(files, (i, f) => $"<a href=\"{f}\">{i.ProductId}</a><br/>"));
-        var message = GenerateMail(order.PurchaserEmail, $"Your order {order.Id}", body);
+            string.Join(" ", input.Order.Items?.Zip(input.Files, (i, f) => $"<a href=\"{f}\">{i.ProductId}</a><br/>") ?? Array.Empty<string>());
+        var message = GenerateMail(input.Order.PurchaserEmail, $"Your order {input.Order.Id}", body);
         await sender.PostAsync(message, log);
     }
 
-    [FunctionName("A_SendProblemEmail")]
+    [Function("A_SendProblemEmail")]
     public static async Task SendProblemEmail(
                 [ActivityTrigger] Order order,
-                [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-                ILogger log)
+                FunctionContext context)
     {
+        var log = context.GetLogger(nameof(SendProblemEmail));
+        var sender = context.InstanceServices.GetRequiredService<ISendGridClient>();
+
         log.LogInformation($"Sending Problem Email {order.PurchaserEmail}");
         var body = "We're very sorry there was a problem processing your order. <br/>" +
             " Please contact customer support.";
@@ -91,12 +107,14 @@ public static class ActivityFunctions
         return message;
     }
 
-    [FunctionName("A_SendNotApprovedEmail")]
+    [Function("A_SendNotApprovedEmail")]
     public static async Task SendNotApprovedEmail(
         [ActivityTrigger] Order order,
-        [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-        ILogger log)
+        FunctionContext context)
     {
+        var log = context.GetLogger(nameof(SendNotApprovedEmail));
+        var sender = context.InstanceServices.GetRequiredService<ISendGridClient>();
+
         log.LogInformation($"Sending Not Approved Email {order.PurchaserEmail}");
         var body = $"We're very sorry we were not able to approve your order #{order.Id}. <br/>" +
             " Please contact customer support.";
@@ -104,12 +122,14 @@ public static class ActivityFunctions
         await sender.PostAsync(message, log);
     }
 
-    [FunctionName("A_RequestOrderApproval")]
+    [Function("A_RequestOrderApproval")]
     public static async Task RequestOrderApproval(
         [ActivityTrigger] Order order,
-        [SendGrid(ApiKey = "SendGridKey")] IAsyncCollector<SendGridMessage> sender,
-        ILogger log)
+        FunctionContext context)
     {
+        var log = context.GetLogger(nameof(RequestOrderApproval));
+        var sender = context.InstanceServices.GetRequiredService<ISendGridClient>();
+
         log.LogInformation($"Requesting Approval for Order {order.PurchaserEmail}");
         var subject = $"Order {order.Id} requires approval";
         var approverEmail = Environment.GetEnvironmentVariable("ApproverEmail");
@@ -124,11 +144,11 @@ public static class ActivityFunctions
         await sender.PostAsync(message, log);
     }
 
-    private static async Task PostAsync(this IAsyncCollector<SendGridMessage> sender, SendGridMessage message, ILogger log)
+    private static async Task PostAsync(this ISendGridClient sender, SendGridMessage message, ILogger log)
     {
         var sendGridKey = Environment.GetEnvironmentVariable("SendGridKey");
         // don't actually try to send SendGrid emails if we are just using example or missing email addresses
-        var testMode = String.IsNullOrEmpty(sendGridKey) || message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
+        var testMode = string.IsNullOrEmpty(sendGridKey) || sendGridKey == "TEST" || message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
             .Any(e => string.IsNullOrEmpty(e) || e.Contains("@example") || e.Contains("@email"));
         if (testMode)
         {
@@ -136,8 +156,7 @@ public static class ActivityFunctions
         }
         else
         {
-            await sender.AddAsync(message);
+            await sender.SendEmailAsync(message);
         }
-
     }
 }

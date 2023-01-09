@@ -30,10 +30,10 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="order in orders" :key="order.input.Id">
-                    <td> <a :href="'orderStatus.html?id=' + order.input.Id">{{order.input.Id}}</a></td>
+                <tr v-for="order in orders" :key="order.input.id">
+                    <td> <a :href="'orderStatus.html?id=' + order.input.id">{{order.input.id}}</a></td>
                     <td>{{order.createdTime | formatDate}}</td>
-                    <td>{{order.input.Items | formatOrderItems}}</td>
+                    <td>{{order.input.items | formatOrderItems}}</td>
                     <td>{{order.runtimeStatus | formatRuntimeStatus}}</td>
                     <td>
                         <span v-if="order.customStatus === 'Needs approval'">

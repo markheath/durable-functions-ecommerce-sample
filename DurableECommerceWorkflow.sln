@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2035
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33122.133
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableECommerceWorkflow", "DurableECommerceWorkflow\DurableECommerceWorkflow.csproj", "{E986C168-BA17-4412-897A-0AFC9DA77CD5}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableECommerceWeb", "DurableECommerceWeb\DurableECommerceWeb.csproj", "{484DA20F-1F96-4CC7-A83F-5010C4D6AE66}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableECommerceTests", "DurableECommerceTests\DurableECommerceTests.csproj", "{EE2EF1B7-7CA1-46A5-A8FD-A8CB66825566}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurableECommerceWorkflowIsolated", "DurableECommerceWorkflowIsolated\DurableECommerceWorkflowIsolated.csproj", "{94715BA2-A99C-476E-878F-73769E5DF7E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{EE2EF1B7-7CA1-46A5-A8FD-A8CB66825566}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE2EF1B7-7CA1-46A5-A8FD-A8CB66825566}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE2EF1B7-7CA1-46A5-A8FD-A8CB66825566}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94715BA2-A99C-476E-878F-73769E5DF7E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94715BA2-A99C-476E-878F-73769E5DF7E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94715BA2-A99C-476E-878F-73769E5DF7E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94715BA2-A99C-476E-878F-73769E5DF7E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

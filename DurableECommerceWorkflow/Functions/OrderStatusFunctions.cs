@@ -89,6 +89,7 @@ namespace DurableECommerceWorkflow.Functions
             var statuses = await client.GetStatusAsync(DateTime.Today.AddHours(-2.0), null,
                 Enum.GetValues(typeof(OrchestrationRuntimeStatus)).Cast<OrchestrationRuntimeStatus>()
                 );
+
             return new OkObjectResult(statuses);
         }
     }

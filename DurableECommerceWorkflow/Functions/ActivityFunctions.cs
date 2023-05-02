@@ -126,8 +126,9 @@ public static class ActivityFunctions
 
     private static async Task PostAsync(this IAsyncCollector<SendGridMessage> sender, SendGridMessage message, ILogger log)
     {
+        var sendGridKey = Environment.GetEnvironmentVariable("SendGridKey");
         // don't actually try to send SendGrid emails if we are just using example or missing email addresses
-        var testMode = message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
+        var testMode = String.IsNullOrEmpty(sendGridKey) || message.Personalizations.SelectMany(p => p.Tos.Select(t => t.Email))
             .Any(e => string.IsNullOrEmpty(e) || e.Contains("@example") || e.Contains("@email"));
         if (testMode)
         {

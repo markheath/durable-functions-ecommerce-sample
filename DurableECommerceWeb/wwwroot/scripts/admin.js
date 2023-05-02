@@ -20,7 +20,7 @@ Vue.filter('formatOrderItems',
     function (value) {
         var x = "";
         for (var i = 0; i < value.length; i++) {
-            x += value[i].ProductId + ", ";
+            x += value[i].productId + ", ";
         }
         return x.substring(0,x.length-2);
     });
@@ -58,11 +58,11 @@ var app = new Vue({
                 });
         },
         approve: function (order, status) {
-            postData(`${baseUrl}/approve/${order.input.Id}`, status)
+            postData(`${baseUrl}/approve/${order.input.id}`, status)
                 .then(_ => order.customStatus = '');
         },
         deleteOrder: function (order) {
-            fetch(`${baseUrl}/order/${order.input.Id}`, { method: 'DELETE' })
+            fetch(`${baseUrl}/order/${order.input.id}`, { method: 'DELETE' })
                 .then(_ => {
                     var index = this.orders.indexOf(order);
                     if (index > -1) {

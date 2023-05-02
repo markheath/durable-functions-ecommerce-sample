@@ -68,12 +68,12 @@
             </tr>
             <tr v-if="orderStatus.output">
                 <td><strong>Status: </strong></td>
-                <td>{{orderStatus.output.Status}}</td>
+                <td>{{orderStatus.output.status}}</td>
             </tr>
-            <tr v-if="orderStatus.output && orderStatus.output.Downloads">
+            <tr v-if="orderStatus.output && orderStatus.output.downloads">
                 <td><strong>Downloads: </strong></td>
                 <td>
-                    <span v-for="(download,index) in orderStatus.output.Downloads" :key="download">
+                    <span v-for="(download,index) in orderStatus.output.downloads" :key="download">
                         <a class="btn btn-primary" :href="download">Item {{index + 1}}</a>&nbsp;
                     </span>
                 </td>

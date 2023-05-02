@@ -6,7 +6,7 @@ In this sample application, when an order webhook is received (by the `NewPurcha
 - Second, it requests approval if the value of the order is greater than a certain amount. This involves sending an email to an administrator and them using the "management" web-page to approve or reject the order.
 - Then in parallel it creates a 'PDF' (actually just text file) for each item ordered in a blob storage account and generates SAS tokens to download them. 
 - Finally, it sends out an email to the purchaser containing the download SAS tokens.
-    - (note you need your own SendGrid API key to actually send emails)
+    - (note you need your own SendGrid API key to actually send emails - use a key of "TEST" to avoid attempting to send emails)
 
 ### Local Application Settings
 
@@ -48,7 +48,7 @@ Visiting `https://localhost:5001/` will take you to a page where you can add ite
 
 By visiting `https://localhost:5001/orderStatus.html?id=<orderId>` you can view the current status of the order.
 
-And visiting `https://localhost:5001/manage` takes you to an order management dashboard that lets administrators approve or reject orders for large amounts, as well as purge order history for completed orders.
+And visiting `https://localhost:5001/admin` takes you to an order management dashboard that lets administrators approve or reject orders for large amounts, as well as purge order history for completed orders.
 
 ### Testing from PowerShell
 

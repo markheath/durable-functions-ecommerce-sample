@@ -4,6 +4,7 @@ using Azure.Data.Tables;
 using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -15,7 +16,7 @@ public static class ApproveOrderFunctions
     public static async Task<HttpResponseData> ApproveOrderById(
         [HttpTrigger(AuthorizationLevel.Anonymous,
             "post", Route = "approve/{id}")]HttpRequestData req,
-        [DurableClient] DurableClientContext clientContext,
+        [DurableClient] DurableTaskClient durableTaskClient,
         //[TableInput(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
         FunctionContext functionContext, string id)
     {
@@ -36,7 +37,7 @@ public static class ApproveOrderFunctions
         var body = await req.ReadAsStringAsync(); // should be "Approved" or "Rejected"
         if (body == null) throw new InvalidOperationException("No approval status supplied");
         var status = JsonSerializer.Deserialize<string>(body);
-        await clientContext.Client.RaiseEventAsync(order.OrchestrationId, "OrderApprovalResult", status);
+        await durableTaskClient.RaiseEventAsync(order.OrchestrationId, "OrderApprovalResult", status);
 
         return req.CreateResponse(HttpStatusCode.OK);
     }
@@ -45,13 +46,13 @@ public static class ApproveOrderFunctions
     public static async Task<HttpResponseData> ApproveOrder(
         [HttpTrigger(AuthorizationLevel.Anonymous,
             "post", Route = null)]HttpRequestData req,
-        [DurableClient] DurableClientContext client,
+        [DurableClient] DurableTaskClient client,
         FunctionContext functionContext)
     {
         var log = functionContext.GetLogger(nameof(ApproveOrder));
         log.LogInformation("Received an approval result.");
         ApprovalResult approvalResult = await GetApprovalResult(req);
-        await client.Client.RaiseEventAsync(approvalResult.OrchestrationId!, "OrderApprovalResult", approvalResult.Approved ? "Approved" : "Rejected");
+        await client.RaiseEventAsync(approvalResult.OrchestrationId!, "OrderApprovalResult", approvalResult.Approved ? "Approved" : "Rejected");
         log.LogInformation($"Approval Result for {approvalResult.OrchestrationId} is {approvalResult.Approved}");
         return req.CreateResponse(HttpStatusCode.OK);
     }

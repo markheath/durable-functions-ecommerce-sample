@@ -11,7 +11,7 @@ public class OrderEntity : ITableEntity
 
     public string PartitionKey { get; set; } = OrderPartitionKey;
     public string? RowKey { get; set; }
-    public string? OrchestrationId { get; set; }
+    public string OrchestrationId { get; set; } = String.Empty;
     public string? Items { get; set; }
     public string? Email { get; set; }
     public DateTime OrderDate { get; set; }

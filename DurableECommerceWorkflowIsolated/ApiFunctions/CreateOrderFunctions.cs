@@ -5,6 +5,7 @@ using Azure.Core.Serialization;
 using DurableECommerceWorkflowIsolated.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Logging;
 
 namespace DurableECommerceWorkflowIsolated.ApiFunctions;
@@ -22,7 +23,7 @@ public static class CreateOrderFunctions
     public static async Task<HttpResponseData> CreateOrder(
         [HttpTrigger(AuthorizationLevel.Anonymous,
             "post", Route = null)]HttpRequestData req,
-        [DurableClient] DurableClientContext durableClientContext,
+        [DurableClient] DurableTaskClient durableTaskClient,
         FunctionContext context)
     {
         var log = context.GetLogger(nameof(CreateOrder));
@@ -30,6 +31,7 @@ public static class CreateOrderFunctions
 
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         var order = JsonSerializer.Deserialize<Order>(requestBody);
+        if (order == null) throw new InvalidOperationException("Failed to deserialize order from request body");
 
         // use shorter order ids for the webpage
         var r = new Random();
@@ -37,7 +39,7 @@ public static class CreateOrderFunctions
 
         log.LogWarning($"Order {order.Id} for {order.ItemCount()} items, total {order.Total()}");
 
-        var orchestrationId = await durableClientContext.Client.ScheduleNewOrchestrationInstanceAsync("O_ProcessOrder", order);
+        var orchestrationId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync("O_ProcessOrder", order);
         var resp = req.CreateResponse(HttpStatusCode.OK);
         await resp.WriteAsJsonAsync(new { order.Id }, serializer);
         return resp;
@@ -47,7 +49,7 @@ public static class CreateOrderFunctions
     public static async Task<HttpResponseData> NewPurchaseWebhook(
         [HttpTrigger(AuthorizationLevel.Anonymous,
             "post", Route = null)]HttpRequestData req,
-        [DurableClient] DurableClientContext durableClientContext,
+        [DurableClient] DurableTaskClient durableTaskClient,
         FunctionContext context)
     {
         var log = context.GetLogger(nameof(NewPurchaseWebhook));
@@ -55,9 +57,10 @@ public static class CreateOrderFunctions
 
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         var order = JsonSerializer.Deserialize<Order>(requestBody);
+        if (order == null) throw new InvalidOperationException("Failed to deserialize order from request body");
         log.LogInformation($"Order is from {order.PurchaserEmail} for {order.ItemCount()} items, total {order.Total()}");
 
-        var orchestrationId = await durableClientContext.Client.ScheduleNewOrchestrationInstanceAsync("O_ProcessOrder", order);
-        return durableClientContext.CreateCheckStatusResponse(req, orchestrationId);
+        var orchestrationId = await durableTaskClient.ScheduleNewOrchestrationInstanceAsync("O_ProcessOrder", order);
+        return durableTaskClient.CreateCheckStatusResponse(req, orchestrationId);
     }
 }

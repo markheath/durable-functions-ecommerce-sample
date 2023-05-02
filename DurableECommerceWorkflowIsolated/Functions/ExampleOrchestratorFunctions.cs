@@ -21,8 +21,8 @@ static class ExampleOrchestratorFunctions
 
         await ctx.CallActivityAsync("A_SaveOrderToDatabase", order);
 
-        string pdfLocation = null;
-        string videoLocation = null;
+        string? pdfLocation = null;
+        string? videoLocation = null;
         try
         {
             // create files in parallel

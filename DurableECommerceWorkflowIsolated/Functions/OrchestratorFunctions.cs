@@ -12,7 +12,7 @@ public static class OrchestratorFunctions
         [OrchestrationTrigger] TaskOrchestrationContext ctx,
         FunctionContext functionContext)
     {
-        var log = ctx.CreateReplaySafeLogger(functionContext.GetLogger(nameof(ProcessOrder)));
+        var log = ctx.CreateReplaySafeLogger(nameof(ProcessOrder));
         
         var order = ctx.GetInput<Order>();
         order.OrchestrationId = ctx.InstanceId;

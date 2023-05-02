@@ -16,7 +16,7 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
         public static async Task<HttpResponseData> GetOrderStatus(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = "orderstatus/{id}")]HttpRequestData req,
-            [DurableClient] DurableClientContext clientContext,
+            [DurableClient] DurableTaskClient durableTaskClient,
             //[TableInput(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order, - fails with converting string to OrderEntity
             FunctionContext functionContext, string id)
         {
@@ -31,9 +31,9 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
             {
                 return req.CreateResponse(HttpStatusCode.NotFound);
             }
-            var order = orderResp.Value;
+            var order = orderResp.Value!;            
 
-            var status = await clientContext.Client.GetInstanceMetadataAsync(order.OrchestrationId, true);
+            var status = await durableTaskClient.GetInstanceAsync(order.OrchestrationId, true);
             if (status == null)
             {
                 log.LogError($"Could not fetch instance metadata for order {order.OrchestrationId}");
@@ -61,7 +61,7 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
         public static async Task<HttpResponseData> DeleteOrder(
                 [HttpTrigger(AuthorizationLevel.Anonymous,
                 "delete", Route = "order/{id}")]HttpRequestData req,
-                [DurableClient] DurableClientContext clientContext,
+                [DurableClient] DurableTaskClient durableTaskClient,
                 //[TableInput(OrderEntity.TableName, OrderEntity.OrderPartitionKey, "{id}", Connection = "AzureWebJobsStorage")] OrderEntity order,
                 FunctionContext functionContext, string id)
         {
@@ -80,13 +80,13 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
             var order = orderResp.Value;
             log.LogInformation($"Deleting order {id}");
 
-            var status = await clientContext.Client.GetInstanceMetadataAsync(order.OrchestrationId, false);
+            var status = await durableTaskClient.GetInstanceAsync(order.OrchestrationId, false);
             if (status?.RuntimeStatus == OrchestrationRuntimeStatus.Running)
             {
                 log.LogWarning($"Order is in progress {id}");
                 return req.CreateResponse(HttpStatusCode.BadRequest);
             }
-            await clientContext.Client.PurgeInstanceMetadataAsync(order.OrchestrationId);
+            await durableTaskClient.PurgeInstanceAsync(order.OrchestrationId);
 
             return req.CreateResponse(HttpStatusCode.OK);
         }
@@ -95,14 +95,14 @@ namespace DurableECommerceWorkflowIsolated.ApiFunctions
         public static async Task<HttpResponseData> GetAllOrders(
             [HttpTrigger(AuthorizationLevel.Anonymous,
                 "get", Route = null)]HttpRequestData req,
-            [DurableClient] DurableClientContext clientContext,
+            [DurableClient] DurableTaskClient durableTaskClient,
             FunctionContext functionContext)
         {
             var log = functionContext.GetLogger(nameof(GetAllOrders));
             log.LogInformation("getting all orders.");
             // just get orders in the last couple of hours to keep manage screen simple
             // interested in orders of all statuses
-            var metadata = await clientContext.Client.GetInstances(
+            var metadata = await durableTaskClient.GetAllInstancesAsync(
                 new OrchestrationQuery(DateTime.Today.AddHours(-8.0),
                 FetchInputsAndOutputs: true,
                 Statuses: Enum.GetValues(typeof(OrchestrationRuntimeStatus)).Cast<OrchestrationRuntimeStatus>()))
